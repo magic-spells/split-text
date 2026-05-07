@@ -43,7 +43,8 @@
 				_.#originalHTML = _.innerHTML;
 				const labelText = _.textContent.replace(/\s+/g, " ").trim();
 				if (labelText && !_.hasAttribute("aria-label")) _.setAttribute("aria-label", labelText);
-				_.#splitMode = _.getAttribute("split") || DEFAULTS.split;
+				const splitAttr = _.getAttribute("split");
+				_.#splitMode = splitAttr === "chars" || splitAttr === "lines" ? splitAttr : "words";
 				if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
 					_.#markRevealed();
 					return;
@@ -123,11 +124,13 @@
 			}
 			const observerOptions = { threshold: Math.min(1, Math.max(0, _.#numericAttr("threshold", DEFAULTS.threshold))) };
 			const offset = _.getAttribute("offset");
-			if (offset !== null && offset !== "") {
-				const trimmed = offset.trim();
-				const isPercent = trimmed.endsWith("%");
-				const value = parseFloat(trimmed);
-				if (Number.isFinite(value) && value > 0) observerOptions.rootMargin = isPercent ? `0px 0px -${value}% 0px` : `0px 0px -${value}px 0px`;
+			if (offset) {
+				const match = offset.trim().match(/^(\d*\.?\d+)(px|%)?$/);
+				if (match) {
+					const value = parseFloat(match[1]);
+					const isPercent = match[2] === "%";
+					if (Number.isFinite(value) && value > 0) observerOptions.rootMargin = isPercent ? `0px 0px -${value}% 0px` : `0px 0px -${value}px 0px`;
+				}
 			}
 			_.#observer = new IntersectionObserver((entries) => {
 				for (const entry of entries) if (entry.isIntersecting) {
@@ -142,11 +145,14 @@
 		async #reveal() {
 			const _ = this;
 			if (_.#revealed) return;
+			if (!_.isConnected || !_.#abortController) return;
+			const controller = _.#abortController;
 			_.#revealed = true;
 			if (_.#splitMode === "lines") {
 				if (document.fonts?.ready) try {
 					await document.fonts.ready;
 				} catch {}
+				if (controller.signal.aborted || _.#abortController !== controller) return;
 				_.#splitLines();
 			}
 			if (_.#units.length === 0) {
@@ -175,7 +181,8 @@
 					once: true,
 					signal: _.#abortController.signal
 				});
-				const totalMs = _.#numericAttr("delay", DEFAULTS.delay) + _.#numericAttr("stagger", DEFAULTS.stagger) * Math.max(0, _.#units.length - 1) + _.#numericAttr("duration", DEFAULTS.duration) + 100;
+				const stepCount = _.#splitMode === "lines" ? _.#lineCount : _.#units.length;
+				const totalMs = _.#numericAttr("delay", DEFAULTS.delay) + _.#numericAttr("stagger", DEFAULTS.stagger) * Math.max(0, stepCount - 1) + _.#numericAttr("duration", DEFAULTS.duration) + 100;
 				const fallback = setTimeout(() => _.#markRevealed(), totalMs);
 				_.#abortController.signal.addEventListener("abort", () => clearTimeout(fallback));
 			}
@@ -211,7 +218,7 @@
 		#isInsideInteractive(element) {
 			if (!element) return false;
 			const interactive = element.closest("a[href], button, summary, label, input, select, textarea, [contenteditable=\"\"], [contenteditable=\"true\"], [role=\"button\"], [role=\"link\"], [role=\"checkbox\"], [role=\"menuitem\"], [role=\"tab\"], [tabindex]:not([tabindex=\"-1\"])");
-			return Boolean(interactive) && this.contains(interactive) && interactive !== this;
+			return Boolean(interactive) && interactive !== this;
 		}
 		#collectTextNodes() {
 			const _ = this;

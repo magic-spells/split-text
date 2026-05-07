@@ -50,7 +50,8 @@ class SplitText extends HTMLElement {
 				_.setAttribute('aria-label', labelText);
 			}
 
-			_.#splitMode = _.getAttribute('split') || DEFAULTS.split;
+			const splitAttr = _.getAttribute('split');
+			_.#splitMode = splitAttr === 'chars' || splitAttr === 'lines' ? splitAttr : 'words';
 
 			if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
 				_.#markRevealed();
@@ -161,16 +162,18 @@ class SplitText extends HTMLElement {
 		const observerOptions = { threshold };
 
 		// `offset` shifts the trigger line up from the bottom of the viewport.
-		// Accepts a number (px) or a string like "20%" (% of viewport height).
+		// Accepts a bare number (px), "Npx", or "N%" — other units are ignored.
 		const offset = _.getAttribute('offset');
-		if (offset !== null && offset !== '') {
-			const trimmed = offset.trim();
-			const isPercent = trimmed.endsWith('%');
-			const value = parseFloat(trimmed);
-			if (Number.isFinite(value) && value > 0) {
-				observerOptions.rootMargin = isPercent
-					? `0px 0px -${value}% 0px`
-					: `0px 0px -${value}px 0px`;
+		if (offset) {
+			const match = offset.trim().match(/^(\d*\.?\d+)(px|%)?$/);
+			if (match) {
+				const value = parseFloat(match[1]);
+				const isPercent = match[2] === '%';
+				if (Number.isFinite(value) && value > 0) {
+					observerOptions.rootMargin = isPercent
+						? `0px 0px -${value}% 0px`
+						: `0px 0px -${value}px 0px`;
+				}
 			}
 		}
 
@@ -190,6 +193,10 @@ class SplitText extends HTMLElement {
 	async #reveal() {
 		const _ = this;
 		if (_.#revealed) return;
+		// Bail if a queued microtask (trigger="load") fires after disconnect, or
+		// if reveal() was called before connectedCallback set up the controller.
+		if (!_.isConnected || !_.#abortController) return;
+		const controller = _.#abortController;
 		_.#revealed = true;
 
 		// Lines mode splits lazily so it sees the actual rendered layout
@@ -201,6 +208,9 @@ class SplitText extends HTMLElement {
 					// fonts API rejected — proceed with current layout
 				}
 			}
+			// Disconnect or .split() during the await replaces/aborts the
+			// controller — bail so we don't mutate stale or detached DOM.
+			if (controller.signal.aborted || _.#abortController !== controller) return;
 			_.#splitLines();
 		}
 
@@ -237,9 +247,12 @@ class SplitText extends HTMLElement {
 				signal: _.#abortController.signal,
 			});
 
+			// In lines mode, units share --i values per line — use line count so a
+			// 100-word / 4-line paragraph doesn't wait for 100 stagger steps.
+			const stepCount = _.#splitMode === 'lines' ? _.#lineCount : _.#units.length;
 			const totalMs =
 				_.#numericAttr('delay', DEFAULTS.delay) +
-				_.#numericAttr('stagger', DEFAULTS.stagger) * Math.max(0, _.#units.length - 1) +
+				_.#numericAttr('stagger', DEFAULTS.stagger) * Math.max(0, stepCount - 1) +
 				_.#numericAttr('duration', DEFAULTS.duration) +
 				100;
 			const fallback = setTimeout(() => _.#markRevealed(), totalMs);
@@ -283,14 +296,16 @@ class SplitText extends HTMLElement {
 	// Per ARIA spec, aria-hidden must not be on or contain focusable elements.
 	// We add aria-hidden to generated word wrappers to prevent AT from
 	// double-reading (host's aria-label already provides the accessible name),
-	// but skip wrappers whose text sits inside an interactive ancestor so we
-	// don't strip the accessible name from links/buttons inside the host.
+	// but skip wrappers whose text sits inside any interactive ancestor —
+	// either inside the host (links/buttons in the source) or outside it
+	// (split-text wrapped in an <a>/<button>) — so we don't strip the
+	// accessible name from those interactive elements.
 	#isInsideInteractive(element) {
 		if (!element) return false;
 		const interactive = element.closest(
 			'a[href], button, summary, label, input, select, textarea, [contenteditable=""], [contenteditable="true"], [role="button"], [role="link"], [role="checkbox"], [role="menuitem"], [role="tab"], [tabindex]:not([tabindex="-1"])'
 		);
-		return Boolean(interactive) && this.contains(interactive) && interactive !== this;
+		return Boolean(interactive) && interactive !== this;
 	}
 
 	#collectTextNodes() {

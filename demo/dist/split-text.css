@@ -2,6 +2,10 @@ split-text:not(:defined) {
   visibility: hidden;
 }
 
+split-text[data-state="splitting"] {
+  visibility: hidden;
+}
+
 split-text {
   --split-text-duration: .8s;
   --split-text-easing: cubic-bezier(.16, 1, .3, 1);

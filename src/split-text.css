@@ -3,6 +3,11 @@ split-text:not(:defined) {
 	visibility: hidden;
 }
 
+/* Lines mode wraps lazily — keep the raw text invisible until measured */
+split-text[data-state='splitting'] {
+	visibility: hidden;
+}
+
 split-text {
 	--split-text-duration: 800ms;
 	--split-text-easing: cubic-bezier(0.16, 1, 0.3, 1);

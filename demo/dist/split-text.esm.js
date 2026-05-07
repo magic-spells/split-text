@@ -29,22 +29,32 @@ var SplitText = class extends HTMLElement {
 	#revealed = false;
 	#splitMode;
 	#units = [];
+	#lineCount = 0;
 	connectedCallback() {
 		const _ = this;
-		if (_.#initialized) return;
-		_.#initialized = true;
-		_.#originalHTML = _.innerHTML;
-		const labelText = _.textContent.replace(/\s+/g, " ").trim();
-		if (labelText && !_.hasAttribute("aria-label")) _.setAttribute("aria-label", labelText);
-		_.#abortController = new AbortController();
-		_.#splitMode = _.getAttribute("split") || DEFAULTS.split;
-		if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-			_.#markRevealed();
-			return;
+		if (_.#revealed) return;
+		if (!_.#initialized) {
+			_.#initialized = true;
+			_.#originalHTML = _.innerHTML;
+			const labelText = _.textContent.replace(/\s+/g, " ").trim();
+			if (labelText && !_.hasAttribute("aria-label")) _.setAttribute("aria-label", labelText);
+			_.#splitMode = _.getAttribute("split") || DEFAULTS.split;
+			if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+				_.#markRevealed();
+				return;
+			}
+			_.#applyTimingProperties();
+			if (_.#splitMode === "words") _.#splitWords();
+			else if (_.#splitMode === "chars") _.#splitChars();
+		} else {
+			if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+				_.#markRevealed();
+				return;
+			}
+			_.#applyTimingProperties();
 		}
-		_.#applyTimingProperties();
-		if (_.#splitMode === "words") _.#splitWords();
-		else if (_.#splitMode === "chars") _.#splitChars();
+		if (_.#splitMode === "lines") _.setAttribute("data-state", "splitting");
+		_.#abortController = new AbortController();
 		_.#setupTrigger();
 	}
 	disconnectedCallback() {
@@ -61,7 +71,12 @@ var SplitText = class extends HTMLElement {
 		this.#reveal();
 	}
 	/**
-	* Re-run splitting (call this if the original innerHTML changed at runtime).
+	* Re-run splitting. Smart behavior:
+	* - If the DOM is currently in its split/wrapped state (post-reveal or
+	*   between renders), the original snapshot is restored and re-split —
+	*   useful for replaying the animation.
+	* - If the user has replaced innerHTML with fresh content, that content
+	*   becomes the new source.
 	*/
 	split() {
 		const _ = this;
@@ -70,11 +85,14 @@ var SplitText = class extends HTMLElement {
 		_.#abortController?.abort();
 		_.#abortController = null;
 		_.#units = [];
+		_.#lineCount = 0;
 		_.#initialized = false;
 		_.#revealed = false;
 		_.removeAttribute("data-state");
 		_.removeAttribute("data-revealed");
-		if (_.#originalHTML !== void 0) _.innerHTML = _.#originalHTML;
+		if (_.querySelector(".split-text-word, .split-text-char") !== null) {
+			if (_.#originalHTML !== void 0) _.innerHTML = _.#originalHTML;
+		} else _.#originalHTML = _.innerHTML;
 		_.connectedCallback();
 	}
 	#numericAttr(name, fallback) {
@@ -98,7 +116,7 @@ var SplitText = class extends HTMLElement {
 			queueMicrotask(() => _.#reveal());
 			return;
 		}
-		const threshold = _.#numericAttr("threshold", DEFAULTS.threshold);
+		const threshold = Math.min(1, Math.max(0, _.#numericAttr("threshold", DEFAULTS.threshold)));
 		_.#observer = new IntersectionObserver((entries) => {
 			for (const entry of entries) if (entry.isIntersecting) {
 				_.#observer?.disconnect();
@@ -123,21 +141,32 @@ var SplitText = class extends HTMLElement {
 			_.#markRevealed();
 			return;
 		}
+		const count = _.#splitMode === "lines" ? _.#lineCount : _.#units.length;
 		_.dispatchEvent(new CustomEvent("split-text:start", {
 			bubbles: true,
 			detail: {
 				split: _.#splitMode,
-				count: _.#units.length
+				count
 			}
 		}));
 		const lastUnit = _.#lastAnimatingUnit();
-		if (lastUnit && _.#abortController) lastUnit.addEventListener("animationend", (event) => {
-			if (event.target !== lastUnit) return;
-			_.#markRevealed();
-		}, {
-			once: true,
-			signal: _.#abortController.signal
-		});
+		if (lastUnit && _.#abortController) {
+			const finish = (event) => {
+				if (event && event.target !== lastUnit) return;
+				_.#markRevealed();
+			};
+			lastUnit.addEventListener("animationend", finish, {
+				once: true,
+				signal: _.#abortController.signal
+			});
+			lastUnit.addEventListener("animationcancel", finish, {
+				once: true,
+				signal: _.#abortController.signal
+			});
+			const totalMs = _.#numericAttr("delay", DEFAULTS.delay) + _.#numericAttr("stagger", DEFAULTS.stagger) * Math.max(0, _.#units.length - 1) + _.#numericAttr("duration", DEFAULTS.duration) + 100;
+			const fallback = setTimeout(() => _.#markRevealed(), totalMs);
+			_.#abortController.signal.addEventListener("abort", () => clearTimeout(fallback));
+		}
 		_.setAttribute("data-state", "revealing");
 	}
 	#lastAnimatingUnit() {
@@ -155,13 +184,15 @@ var SplitText = class extends HTMLElement {
 	}
 	#markRevealed() {
 		const _ = this;
+		if (_.hasAttribute("data-revealed")) return;
 		_.removeAttribute("data-state");
 		_.setAttribute("data-revealed", "");
+		const count = _.#splitMode === "lines" ? _.#lineCount : _.#units.length;
 		_.dispatchEvent(new CustomEvent("split-text:complete", {
 			bubbles: true,
 			detail: {
 				split: _.#splitMode,
-				count: _.#units.length
+				count
 			}
 		}));
 	}
@@ -219,7 +250,6 @@ var SplitText = class extends HTMLElement {
 				if (match.index > cursor) fragment.appendChild(document.createTextNode(text.slice(cursor, match.index)));
 				const wordOuter = document.createElement("span");
 				wordOuter.className = "split-text-word";
-				wordOuter.setAttribute("aria-hidden", "true");
 				const graphemes = segmenter ? Array.from(segmenter.segment(match[0]), (s) => s.segment) : Array.from(match[0]);
 				for (const grapheme of graphemes) {
 					const charOuter = document.createElement("span");
@@ -242,6 +272,7 @@ var SplitText = class extends HTMLElement {
 	#splitLines() {
 		const _ = this;
 		_.#units = [];
+		_.#lineCount = 0;
 		_.#splitWords();
 		const wordSpans = Array.from(_.querySelectorAll(".split-text-word"));
 		if (wordSpans.length === 0) return;
@@ -273,6 +304,7 @@ var SplitText = class extends HTMLElement {
 			}
 		}
 		_.#units = newUnits;
+		_.#lineCount = newUnits.length === 0 ? 0 : lineIndex + 1;
 	}
 };
 if (!customElements.get("split-text")) customElements.define("split-text", SplitText);

@@ -650,6 +650,9 @@ npm i @magic-spells/split-text
 						<split-text>The fox quietly steps across the cool morning grass.</split-text>
 					</p>
 				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
 				<div class="code-block">
 					&lt;<span class="hl-tag">split-text</span>&gt;The fox quietly steps across the cool morning grass.&lt;/<span class="hl-tag">split-text</span>&gt;
 				</div>
@@ -670,6 +673,9 @@ npm i @magic-spells/split-text
 							café · résumé · 🌒 · naïve
 						</split-text>
 					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
 				</div>
 				<div class="code-block">
 					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"20"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
@@ -695,6 +701,9 @@ npm i @magic-spells/split-text
 						</split-text>
 					</p>
 				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
 				<div class="code-block">
 					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">split</span>=<span class="hl-val">"lines"</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"120"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
 				</div>
@@ -719,6 +728,9 @@ npm i @magic-spells/split-text
 							<em>emphasis stays emphatic</em>, and line breaks are honored as actual line boundaries.
 						</split-text>
 					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
 				</div>
 			</section>
 
@@ -793,6 +805,9 @@ npm i @magic-spells/split-text
 						</split-text>
 					</p>
 				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay all</button>
+				</div>
 			</section>
 
 			<!-- ---- 07 Distance + initial delay ---- -->
@@ -811,6 +826,9 @@ npm i @magic-spells/split-text
 							Sometimes the smallest motion is the most felt.
 						</split-text>
 					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
 				</div>
 				<div class="code-block">
 					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"60"</span> <span class="hl-attr">duration</span>=<span class="hl-val">"1100"</span> <span class="hl-attr">delay</span>=<span class="hl-val">"300"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
@@ -856,6 +874,9 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 					<p class="stage-headline" data-events>
 						<split-text>Watch the console as you scroll past this line.</split-text>
 					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
 				</div>
 				<div class="code-block">
 					el.addEventListener(<span class="hl-val">'split-text:complete'</span>, (e) =&gt; {
@@ -988,6 +1009,18 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 			// Wait for the custom element to define so .reveal() / .split() exist
 			await customElements.whenDefined('split-text');
+
+			// ---- Generic [data-replay] buttons: replay all <split-text> in the section ----
+			document.addEventListener('click', (event) => {
+				const button = event.target.closest('[data-replay]');
+				if (!button) return;
+				const section = button.closest('.demo-section');
+				if (!section) return;
+				for (const el of section.querySelectorAll('split-text')) {
+					el.split();
+					el.reveal();
+				}
+			});
 
 			// ---- 05 Stagger lab ----
 			const labSplit = document.getElementById('lab-split');

@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Split Text — @magic-spells</title>
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Outfit:wght@200;300;400;500&display=swap"
+			rel="stylesheet" />
+		<link rel="stylesheet" href="/dist/split-text.min.css" />
+
+		<style>
+			:root {
+				--bg-deep: #07060b;
+				--bg-card: #0f0e14;
+				--bg-card-hover: #15141c;
+				--border: #1e1c28;
+				--border-accent: #2a2636;
+				--gold: #c9a84c;
+				--gold-dim: #8a7233;
+				--gold-glow: rgba(201, 168, 76, 0.12);
+				--cream: #e8e0cc;
+				--cream-dim: #9a9284;
+				--text: #c4bfb2;
+				--text-dim: #6b665c;
+				--font-display: 'Cormorant Garamond', Georgia, serif;
+				--font-body: 'Outfit', system-ui, sans-serif;
+			}
+
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+
+			html {
+				scroll-behavior: smooth;
+				background: var(--bg-deep);
+			}
+
+			body {
+				font-family: var(--font-body);
+				font-weight: 300;
+				color: var(--text);
+				background: var(--bg-deep);
+				overflow-x: hidden;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			/* ---- Noise overlay ---- */
+			body::before {
+				content: '';
+				position: fixed;
+				inset: 0;
+				z-index: 9999;
+				pointer-events: none;
+				opacity: 0.025;
+				background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+				background-repeat: repeat;
+				background-size: 256px;
+			}
+
+			/* ---- Hero ---- */
+			.hero {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				padding: 5rem 2rem 3rem;
+				text-align: center;
+			}
+
+			.hero::before {
+				content: '';
+				position: absolute;
+				top: -40%;
+				left: 50%;
+				transform: translateX(-50%);
+				width: 900px;
+				height: 900px;
+				background: radial-gradient(ellipse, var(--gold-glow) 0%, transparent 70%);
+				pointer-events: none;
+			}
+
+			.hero-badge {
+				font-family: var(--font-body);
+				font-weight: 400;
+				font-size: 0.7rem;
+				letter-spacing: 0.25em;
+				text-transform: uppercase;
+				color: var(--gold);
+				border: 1px solid var(--border-accent);
+				padding: 0.4em 1.4em;
+				border-radius: 100px;
+				margin-bottom: 2.5rem;
+				text-decoration: none;
+				transition:
+					border-color 0.3s ease,
+					color 0.3s ease;
+			}
+
+			.hero-badge:hover {
+				border-color: var(--gold-dim);
+				color: var(--cream);
+			}
+
+			.hero h1 {
+				font-family: var(--font-display);
+				font-weight: 300;
+				font-size: clamp(3rem, 9vw, 7.5rem);
+				line-height: 1.05;
+				color: var(--cream);
+				letter-spacing: -0.02em;
+				margin-bottom: 1.75rem;
+				max-width: 12ch;
+			}
+
+			.hero h1 em {
+				font-style: italic;
+				color: var(--gold);
+			}
+
+			.hero-tagline {
+				max-width: 540px;
+				font-size: 1.05rem;
+				line-height: 1.7;
+				color: var(--text);
+				margin-bottom: 0;
+			}
+
+			.hero-line {
+				width: 1px;
+				height: 80px;
+				background: linear-gradient(to bottom, var(--gold-dim), transparent);
+				margin-top: 3rem;
+			}
+
+			/* ---- Install banner ---- */
+			.install-banner {
+				display: flex;
+				justify-content: center;
+				gap: 2.5rem;
+				flex-wrap: wrap;
+				margin: 0 auto 3rem;
+				max-width: 680px;
+				padding: 0 1.5rem;
+			}
+
+			.install-item {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 0.4rem;
+			}
+
+			.install-label {
+				font-family: var(--font-body);
+				font-size: 0.65rem;
+				font-weight: 400;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--text-dim);
+			}
+
+			.install-value {
+				font-family: 'Courier New', monospace;
+				font-size: 0.88rem;
+				color: var(--cream);
+				background: var(--bg-card);
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				padding: 0.5em 1.2em;
+				user-select: all;
+				cursor: copy;
+				transition: border-color 0.3s ease;
+			}
+
+			.install-value:hover {
+				border-color: var(--gold-dim);
+			}
+
+			.install-size {
+				font-family: 'Courier New', monospace;
+				font-size: 0.88rem;
+				color: var(--gold);
+				padding: 0.5em 0;
+			}
+
+			.quick-start {
+				max-width: 720px;
+				margin: 0 auto 4rem;
+				padding: 0 1.5rem;
+			}
+
+			.code-block-wide {
+				background: var(--bg-card);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 1.75rem 2rem;
+				font-family: 'Courier New', monospace;
+				font-size: 0.82rem;
+				line-height: 1.85;
+				color: var(--text);
+				white-space: pre-wrap;
+				overflow-x: auto;
+				margin: 0;
+			}
+
+			/* ---- Sections ---- */
+			.demos {
+				max-width: 1100px;
+				margin: 0 auto;
+				padding: 1rem 1.5rem 8rem;
+				display: flex;
+				flex-direction: column;
+				gap: 6rem;
+			}
+
+			.demo-section {
+				position: relative;
+				background: var(--bg-card);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 3rem 2.5rem;
+				transition:
+					border-color 0.4s ease,
+					background 0.4s ease;
+			}
+
+			.demo-section:hover {
+				border-color: var(--border-accent);
+				background: var(--bg-card-hover);
+			}
+
+			.demo-eyebrow {
+				font-family: var(--font-body);
+				font-size: 0.65rem;
+				font-weight: 400;
+				letter-spacing: 0.25em;
+				text-transform: uppercase;
+				color: var(--gold);
+				margin-bottom: 1.25rem;
+				display: block;
+			}
+
+			.demo-section h2 {
+				font-family: var(--font-display);
+				font-weight: 400;
+				font-size: clamp(2rem, 4vw, 3rem);
+				line-height: 1.1;
+				color: var(--cream);
+				letter-spacing: -0.01em;
+				margin-bottom: 1rem;
+			}
+
+			.demo-section h2 em {
+				font-style: italic;
+				color: var(--gold);
+			}
+
+			.demo-desc {
+				font-size: 1rem;
+				color: var(--text);
+				line-height: 1.7;
+				margin-bottom: 2rem;
+				max-width: 600px;
+			}
+
+			.demo-desc code,
+			.stage-paragraph code {
+				font-family: 'Courier New', monospace;
+				font-size: 0.85em;
+				color: var(--gold);
+				background: var(--bg-deep);
+				padding: 0.1em 0.4em;
+				border-radius: 4px;
+			}
+
+			.demo-desc strong {
+				color: var(--cream);
+				font-weight: 500;
+			}
+
+			.demo-stage {
+				background: linear-gradient(
+					135deg,
+					rgba(255, 255, 255, 0.01) 0%,
+					rgba(255, 255, 255, 0.03) 100%
+				);
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 3rem 2.25rem;
+				margin-bottom: 1.75rem;
+			}
+
+			.demo-stage.tall {
+				padding: 4rem 2.25rem;
+			}
+
+			.stage-headline {
+				font-family: var(--font-display);
+				font-weight: 400;
+				font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+				line-height: 1.2;
+				color: var(--cream);
+				letter-spacing: -0.005em;
+			}
+
+			.stage-headline em {
+				font-style: italic;
+				color: var(--gold);
+			}
+
+			.stage-paragraph {
+				font-size: 1.05rem;
+				line-height: 1.85;
+				color: var(--text);
+				max-width: 640px;
+			}
+
+			.stage-paragraph a {
+				color: var(--gold);
+				text-decoration: none;
+				border-bottom: 1px solid var(--gold-dim);
+				transition: color 0.2s ease;
+			}
+
+			.stage-paragraph a:hover {
+				color: var(--cream);
+			}
+
+			.stage-paragraph em {
+				font-style: italic;
+				color: var(--cream);
+			}
+
+			.stage-paragraph strong {
+				font-weight: 500;
+				color: var(--cream);
+			}
+
+			/* ---- Controls ---- */
+			.controls {
+				display: flex;
+				gap: 0.75rem;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+
+			.btn {
+				font-family: var(--font-body);
+				font-weight: 400;
+				font-size: 0.7rem;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--cream);
+				background: transparent;
+				border: 1px solid var(--border-accent);
+				padding: 0.7em 1.6em;
+				border-radius: 100px;
+				cursor: pointer;
+				transition: all 0.3s ease;
+			}
+
+			.btn:hover {
+				border-color: var(--gold-dim);
+				color: var(--gold);
+				box-shadow: 0 0 20px rgba(201, 168, 76, 0.1);
+			}
+
+			.btn:active {
+				transform: translateY(1px);
+			}
+
+			/* ---- Slider row ---- */
+			.slider-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+				gap: 1.25rem 2rem;
+				margin-bottom: 1.5rem;
+			}
+
+			.slider-row {
+				display: flex;
+				flex-direction: column;
+				gap: 0.4rem;
+			}
+
+			.slider-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 0.5rem;
+			}
+
+			.slider-label {
+				font-family: var(--font-body);
+				font-size: 0.65rem;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--text-dim);
+			}
+
+			.slider-value {
+				font-family: 'Courier New', monospace;
+				font-size: 0.78rem;
+				color: var(--gold);
+			}
+
+			input[type='range'] {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 100%;
+				height: 2px;
+				background: var(--border-accent);
+				border-radius: 1px;
+				outline: none;
+				cursor: pointer;
+			}
+
+			input[type='range']::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--gold);
+				border: none;
+				box-shadow: 0 0 16px rgba(201, 168, 76, 0.4);
+				transition: box-shadow 0.2s ease;
+			}
+
+			input[type='range']::-webkit-slider-thumb:hover {
+				box-shadow: 0 0 24px rgba(201, 168, 76, 0.6);
+			}
+
+			input[type='range']::-moz-range-thumb {
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--gold);
+				border: none;
+				box-shadow: 0 0 16px rgba(201, 168, 76, 0.4);
+			}
+
+			/* ---- Code block ---- */
+			.code-block {
+				background: var(--bg-deep);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				padding: 1.25rem 1.5rem;
+				overflow-x: auto;
+				margin-top: 1.75rem;
+				font-family: 'Courier New', monospace;
+				font-size: 0.78rem;
+				line-height: 1.85;
+				color: var(--text);
+				-webkit-overflow-scrolling: touch;
+			}
+
+			.code-block .hl-tag,
+			.code-block-wide .hl-tag { color: var(--gold); }
+			.code-block .hl-attr,
+			.code-block-wide .hl-attr { color: #a59ad8; }
+			.code-block .hl-val,
+			.code-block-wide .hl-val { color: #d68a72; }
+			.code-block .hl-cm,
+			.code-block-wide .hl-cm { color: var(--text-dim); font-style: italic; }
+
+			/* ---- Reference tables ---- */
+			.ref-heading {
+				font-family: var(--font-body);
+				font-weight: 400;
+				font-size: 0.7rem;
+				letter-spacing: 0.22em;
+				text-transform: uppercase;
+				color: var(--gold);
+				margin: 2.25rem 0 1rem;
+			}
+
+			.ref-heading:first-of-type {
+				margin-top: 0.5rem;
+			}
+
+			.ref-table {
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				overflow: hidden;
+				font-size: 0.85rem;
+			}
+
+			.ref-row {
+				display: grid;
+				grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 2fr);
+				gap: 1rem;
+				padding: 0.75rem 1.25rem;
+				border-top: 1px solid var(--border);
+				color: var(--text);
+				line-height: 1.55;
+				align-items: baseline;
+			}
+
+			.ref-row:first-child {
+				border-top: none;
+			}
+
+			.ref-row.ref-head {
+				background: var(--bg-deep);
+				font-family: var(--font-body);
+				font-size: 0.65rem;
+				font-weight: 400;
+				letter-spacing: 0.18em;
+				text-transform: uppercase;
+				color: var(--text-dim);
+			}
+
+			.ref-row code {
+				font-family: 'Courier New', monospace;
+				font-size: 0.78rem;
+				color: var(--cream);
+				background: var(--bg-deep);
+				padding: 0.12em 0.45em;
+				border-radius: 4px;
+				word-break: break-word;
+			}
+
+			@media (max-width: 640px) {
+				.ref-row {
+					grid-template-columns: 1fr;
+					gap: 0.35rem;
+				}
+				.ref-row.ref-head {
+					display: none;
+				}
+			}
+
+			/* ---- Footer ---- */
+			footer {
+				max-width: 1100px;
+				margin: 0 auto;
+				padding: 2rem 1.5rem 4rem;
+				border-top: 1px solid var(--border);
+				text-align: center;
+			}
+
+			footer p {
+				font-family: 'Courier New', monospace;
+				font-size: 0.72rem;
+				color: var(--text-dim);
+				letter-spacing: 0.04em;
+			}
+
+			/* ---- Responsive ---- */
+			@media (max-width: 640px) {
+				.demo-section {
+					padding: 2rem 1.5rem;
+				}
+				.demo-stage {
+					padding: 2rem 1.5rem;
+				}
+				.demo-stage.tall {
+					padding: 2.5rem 1.5rem;
+				}
+				.demos {
+					gap: 4rem;
+				}
+				.install-banner {
+					gap: 1.5rem;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- ======== HERO ======== -->
+		<header class="hero">
+			<a
+				class="hero-badge"
+				href="https://github.com/magic-spells/split-text"
+				target="_blank"
+				rel="noopener"
+				>@magic-spells/split-text</a
+			>
+			<h1>
+				<split-text trigger="load" stagger="60" duration="900" delay="200">Words</split-text><br />
+				<split-text trigger="load" stagger="60" duration="900" delay="500" split="words">that <em>rise</em>.</split-text>
+			</h1>
+			<p class="hero-tagline">
+				<split-text trigger="load" stagger="20" delay="1000">
+					A tiny web component that splits text and animates it into view, by word, character, or line.
+				</split-text>
+			</p>
+			<div class="hero-line"></div>
+		</header>
+
+		<!-- ======== INSTALL ======== -->
+		<div class="install-banner">
+			<div class="install-item">
+				<span class="install-label">Install</span>
+				<code class="install-value">npm i @magic-spells/split-text</code>
+			</div>
+			<div class="install-item">
+				<span class="install-label">JS (gzip)</span>
+				<span class="install-size">2.0 KB</span>
+			</div>
+			<div class="install-item">
+				<span class="install-label">CSS (gzip)</span>
+				<span class="install-size">0.4 KB</span>
+			</div>
+			<div class="install-item">
+				<span class="install-label">Dependencies</span>
+				<span class="install-size">0</span>
+			</div>
+		</div>
+
+		<!-- ======== QUICK START ======== -->
+		<div class="quick-start">
+			<div class="code-block code-block-wide">
+<span class="hl-cm">// install</span>
+npm i @magic-spells/split-text
+
+<span class="hl-cm">// import (auto-registers the &lt;split-text&gt; element)</span>
+<span class="hl-tag">import</span> <span class="hl-val">'@magic-spells/split-text'</span>
+
+<span class="hl-cm">// or via CDN</span>
+&lt;<span class="hl-tag">script</span> <span class="hl-attr">src</span>=<span class="hl-val">"https://unpkg.com/@magic-spells/split-text"</span>&gt;&lt;/<span class="hl-tag">script</span>&gt;
+&lt;<span class="hl-tag">link</span> <span class="hl-attr">rel</span>=<span class="hl-val">"stylesheet"</span> <span class="hl-attr">href</span>=<span class="hl-val">"https://unpkg.com/@magic-spells/split-text/css/min"</span>&gt;
+
+<span class="hl-cm">// use it</span>
+&lt;<span class="hl-tag">split-text</span>&gt;The fox quietly steps across the morning grass.&lt;/<span class="hl-tag">split-text</span>&gt;
+			</div>
+		</div>
+
+		<!-- ======== DEMOS ======== -->
+		<main class="demos">
+			<!-- ---- 01 Words ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">01 — Words mode</span>
+				<h2>Each word, on its own.</h2>
+				<p class="demo-desc">
+					The default mode. Words slide up sequentially with a 30ms stagger. Drop in a
+					<code>&lt;split-text&gt;</code> tag and it animates as soon as it scrolls into view —
+					nothing else to wire up.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline">
+						<split-text>The fox quietly steps across the cool morning grass.</split-text>
+					</p>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span>&gt;The fox quietly steps across the cool morning grass.&lt;/<span class="hl-tag">split-text</span>&gt;
+				</div>
+			</section>
+
+			<!-- ---- 02 Chars ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">02 — Characters</span>
+				<h2>Letter by letter.</h2>
+				<p class="demo-desc">
+					Use <code>split="chars"</code> for grapheme-level animation. Emoji and accented characters
+					stay intact — the splitter uses <code>Intl.Segmenter</code> internally so nothing breaks
+					mid-codepoint.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline">
+						<split-text split="chars" stagger="20" duration="700">
+							café · résumé · 🌒 · naïve
+						</split-text>
+					</p>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"20"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+				</div>
+			</section>
+
+			<!-- ---- 03 Lines ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">03 — Lines mode</span>
+				<h2>Every line, together.</h2>
+				<p class="demo-desc">
+					<code>split="lines"</code> measures word positions after layout, groups them by their
+					rendered top, and animates entire lines together. Inline markup stays in place — no
+					words are ever re-parented, so links and emphasis survive the split.
+				</p>
+				<div class="demo-stage tall">
+					<p class="stage-paragraph">
+						<split-text split="lines" stagger="120" duration="900">
+							There is a kind of motion that doesn't draw attention to itself. It just lets the
+							page settle into place, the way a curtain falls or a page turns. <em>That's the
+							idea here.</em> A handful of bytes, a small piece of CSS, and the words arrive
+							exactly when you scroll to them.
+						</split-text>
+					</p>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">split</span>=<span class="hl-val">"lines"</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"120"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+				</div>
+			</section>
+
+			<!-- ---- 04 Inline markup ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">04 — Inline markup preserved</span>
+				<h2>Links still <em>link</em>.</h2>
+				<p class="demo-desc">
+					Wrap whatever you want — <code>&lt;em&gt;</code>, <code>&lt;strong&gt;</code>,
+					<code>&lt;a&gt;</code>, <code>&lt;br&gt;</code>. The splitter walks text nodes only, so
+					inline tags are never moved or unwrapped. Try clicking the link below.
+				</p>
+				<div class="demo-stage tall">
+					<p class="stage-paragraph">
+						<split-text split="lines" stagger="150" duration="950">
+							Built with <em>care</em> by someone who reads the source.
+							<br />
+							It plays nicely with <strong>real HTML</strong> —
+							<a href="https://github.com/magic-spells/split-text" target="_blank" rel="noopener">links remain links</a>,
+							<em>emphasis stays emphatic</em>, and line breaks are honored as actual line boundaries.
+						</split-text>
+					</p>
+				</div>
+			</section>
+
+			<!-- ---- 05 Stagger lab ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">05 — Stagger lab</span>
+				<h2>Tune the timing.</h2>
+				<p class="demo-desc">
+					Adjust delay, stagger, and duration. Click <strong>Replay</strong> to re-run with new
+					values. The reset uses the public <code>.split()</code> method — same DOM, fresh
+					animation.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline" id="lab-stage">
+						<split-text id="lab-split" trigger="manual" delay="0" stagger="40" duration="800">
+							Words tuned to your liking.
+						</split-text>
+					</p>
+				</div>
+				<div class="slider-grid">
+					<div class="slider-row">
+						<div class="slider-head">
+							<span class="slider-label">Delay</span>
+							<span class="slider-value" id="lab-delay-val">0ms</span>
+						</div>
+						<input type="range" id="lab-delay" min="0" max="2000" step="50" value="0" />
+					</div>
+					<div class="slider-row">
+						<div class="slider-head">
+							<span class="slider-label">Stagger</span>
+							<span class="slider-value" id="lab-stagger-val">40ms</span>
+						</div>
+						<input type="range" id="lab-stagger" min="0" max="200" step="5" value="40" />
+					</div>
+					<div class="slider-row">
+						<div class="slider-head">
+							<span class="slider-label">Duration</span>
+							<span class="slider-value" id="lab-duration-val">800ms</span>
+						</div>
+						<input type="range" id="lab-duration" min="200" max="2000" step="50" value="800" />
+					</div>
+				</div>
+				<div class="controls">
+					<button class="btn" id="lab-replay">Replay</button>
+					<button class="btn" id="lab-words">Words</button>
+					<button class="btn" id="lab-chars">Chars</button>
+					<button class="btn" id="lab-lines">Lines</button>
+				</div>
+			</section>
+
+			<!-- ---- 06 Easing ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">06 — Easing</span>
+				<h2>Curves that <em>feel</em>.</h2>
+				<p class="demo-desc">
+					Pass any CSS easing through the <code>easing</code> attribute, or override the
+					<code>--split-text-easing</code> custom property. Below: three different curves on the
+					same line.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline" style="margin-bottom: 1.25rem">
+						<split-text easing="ease-out" stagger="40">Calm and even.</split-text>
+					</p>
+					<p class="stage-headline" style="margin-bottom: 1.25rem">
+						<split-text easing="cubic-bezier(0.34, 1.56, 0.64, 1)" stagger="40">
+							A spring overshoot.
+						</split-text>
+					</p>
+					<p class="stage-headline">
+						<split-text easing="cubic-bezier(0.85, 0, 0.15, 1)" stagger="40">
+							Slow start, sharp finish.
+						</split-text>
+					</p>
+				</div>
+			</section>
+
+			<!-- ---- 07 Distance + initial delay ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">07 — Distance &amp; pause</span>
+				<h2>A subtler rise.</h2>
+				<p class="demo-desc">
+					<code>--split-text-distance</code> controls how far each unit travels. Pair a short
+					travel with a meaningful initial <code>delay</code> for a slow, considered intro.
+				</p>
+				<div class="demo-stage tall">
+					<p
+						class="stage-headline"
+						style="--split-text-distance: 50%; --split-text-easing: ease-out">
+						<split-text stagger="60" duration="1100" delay="300">
+							Sometimes the smallest motion is the most felt.
+						</split-text>
+					</p>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"60"</span> <span class="hl-attr">duration</span>=<span class="hl-val">"1100"</span> <span class="hl-attr">delay</span>=<span class="hl-val">"300"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+<span class="hl-cm">// css: --split-text-distance: 50%</span>
+				</div>
+			</section>
+
+			<!-- ---- 08 Manual trigger ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">08 — Manual trigger</span>
+				<h2>Drive it yourself.</h2>
+				<p class="demo-desc">
+					Set <code>trigger="manual"</code> and call <code>.reveal()</code> from JavaScript when you
+					want the animation to fire. Useful for orchestrating a sequence with other animations,
+					or replaying on demand.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline">
+						<split-text id="manual-split" trigger="manual" split="chars" stagger="30">
+							Press the button.
+						</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" id="manual-go">Reveal</button>
+					<button class="btn" id="manual-replay">Replay</button>
+				</div>
+				<div class="code-block">
+					<span class="hl-cm">// JS</span>
+document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
+				</div>
+			</section>
+
+			<!-- ---- 09 Events ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">09 — Events</span>
+				<h2>Listen in.</h2>
+				<p class="demo-desc">
+					Each component fires <code>split-text:start</code> and <code>split-text:complete</code>.
+					Open your console and scroll past — every reveal logs its mode and unit count.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline" data-events>
+						<split-text>Watch the console as you scroll past this line.</split-text>
+					</p>
+				</div>
+				<div class="code-block">
+					el.addEventListener(<span class="hl-val">'split-text:complete'</span>, (e) =&gt; {
+  console.log(e.detail) <span class="hl-cm">// { split: 'words', count: 9 }</span>
+})
+				</div>
+			</section>
+
+			<!-- ---- 10 Reduced motion ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">10 — Accessibility</span>
+				<h2>Respect for reduced motion.</h2>
+				<p class="demo-desc">
+					When the OS preference is "reduce motion," the component skips animation entirely and
+					shows content immediately. The host's <code>aria-label</code> is set from the original
+					text content, so screen readers read the sentence once instead of word by word.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline">
+						<split-text>Honest defaults. Quiet motion. Accessible by design.</split-text>
+					</p>
+				</div>
+			</section>
+
+			<!-- ---- 11 Reference ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">11 — Reference</span>
+				<h2>The whole API, on one screen.</h2>
+				<p class="demo-desc">
+					Six attributes, five custom properties, two methods, two events. That's everything.
+				</p>
+
+				<h3 class="ref-heading">Attributes</h3>
+				<div class="ref-table">
+					<div class="ref-row ref-head">
+						<div>Attribute</div><div>Default</div><div>Description</div>
+					</div>
+					<div class="ref-row">
+						<div><code>split</code></div><div><code>words</code></div><div><code>words</code> · <code>chars</code> · <code>lines</code></div>
+					</div>
+					<div class="ref-row">
+						<div><code>delay</code></div><div><code>0</code></div><div>Initial delay before first unit (ms)</div>
+					</div>
+					<div class="ref-row">
+						<div><code>stagger</code></div><div><code>30</code></div><div>Delay between units (ms)</div>
+					</div>
+					<div class="ref-row">
+						<div><code>duration</code></div><div><code>800</code></div><div>Animation duration per unit (ms)</div>
+					</div>
+					<div class="ref-row">
+						<div><code>easing</code></div><div><code>cubic-bezier(0.16, 1, 0.3, 1)</code></div><div>CSS easing function</div>
+					</div>
+					<div class="ref-row">
+						<div><code>trigger</code></div><div><code>visible</code></div><div><code>visible</code> · <code>load</code> · <code>manual</code></div>
+					</div>
+					<div class="ref-row">
+						<div><code>threshold</code></div><div><code>0.1</code></div><div>IntersectionObserver threshold (0–1)</div>
+					</div>
+				</div>
+
+				<h3 class="ref-heading">CSS Custom Properties</h3>
+				<div class="ref-table">
+					<div class="ref-row ref-head">
+						<div>Property</div><div>Default</div><div>Description</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-duration</code></div><div><code>800ms</code></div><div>Animation duration</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-easing</code></div><div><code>cubic-bezier(0.16, 1, 0.3, 1)</code></div><div>Animation easing</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-distance</code></div><div><code>100%</code></div><div>How far each unit travels up</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-stagger</code></div><div><code>30ms</code></div><div>Delay between units</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-delay</code></div><div><code>0ms</code></div><div>Initial delay</div>
+					</div>
+				</div>
+
+				<h3 class="ref-heading">Methods &amp; Events</h3>
+				<div class="ref-table">
+					<div class="ref-row ref-head">
+						<div>Name</div><div>Type</div><div>Description</div>
+					</div>
+					<div class="ref-row">
+						<div><code>reveal()</code></div><div>method</div><div>Trigger animation manually</div>
+					</div>
+					<div class="ref-row">
+						<div><code>split()</code></div><div>method</div><div>Reset and re-split (after innerHTML changes)</div>
+					</div>
+					<div class="ref-row">
+						<div><code>split-text:start</code></div><div>event</div><div>Fires when reveal begins · detail <code>{ split, count }</code></div>
+					</div>
+					<div class="ref-row">
+						<div><code>split-text:complete</code></div><div>event</div><div>Fires after the last unit settles</div>
+					</div>
+				</div>
+
+				<h3 class="ref-heading">Browser support</h3>
+				<p class="demo-desc" style="margin-bottom: 0">
+					Modern browsers with custom elements + <code>IntersectionObserver</code>: Chrome 64+,
+					Firefox 67+, Safari 12.1+, Edge 79+. <code>Intl.Segmenter</code> is used when available
+					for grapheme-correct character splitting; older Safari falls back to spread iterator.
+				</p>
+			</section>
+		</main>
+
+		<footer>
+			<p>&copy; 2026 Magic Spells · MIT License</p>
+		</footer>
+
+		<script type="module" src="/dist/split-text.esm.js"></script>
+		<script type="module">
+			// ---- Copy install command ----
+			const installValue = document.querySelector('.install-value');
+			if (installValue) {
+				installValue.addEventListener('click', () => {
+					navigator.clipboard.writeText(installValue.textContent.trim()).then(() => {
+						const original = installValue.textContent;
+						installValue.textContent = 'Copied!';
+						setTimeout(() => {
+							installValue.textContent = original;
+						}, 1500);
+					});
+				});
+			}
+
+			// Wait for the custom element to define so .reveal() / .split() exist
+			await customElements.whenDefined('split-text');
+
+			// ---- 05 Stagger lab ----
+			const labSplit = document.getElementById('lab-split');
+			const labDelay = document.getElementById('lab-delay');
+			const labStagger = document.getElementById('lab-stagger');
+			const labDuration = document.getElementById('lab-duration');
+			const labDelayVal = document.getElementById('lab-delay-val');
+			const labStaggerVal = document.getElementById('lab-stagger-val');
+			const labDurationVal = document.getElementById('lab-duration-val');
+
+			const setLabSliderValues = () => {
+				labDelayVal.textContent = `${labDelay.value}ms`;
+				labStaggerVal.textContent = `${labStagger.value}ms`;
+				labDurationVal.textContent = `${labDuration.value}ms`;
+			};
+			setLabSliderValues();
+			[labDelay, labStagger, labDuration].forEach((el) => el.addEventListener('input', setLabSliderValues));
+
+			const replayLab = () => {
+				labSplit.setAttribute('delay', labDelay.value);
+				labSplit.setAttribute('stagger', labStagger.value);
+				labSplit.setAttribute('duration', labDuration.value);
+				labSplit.split();
+				labSplit.reveal();
+			};
+
+			document.getElementById('lab-replay').addEventListener('click', replayLab);
+
+			const labModeBtn = (id, mode) => {
+				document.getElementById(id).addEventListener('click', () => {
+					labSplit.setAttribute('split', mode);
+					replayLab();
+				});
+			};
+			labModeBtn('lab-words', 'words');
+			labModeBtn('lab-chars', 'chars');
+			labModeBtn('lab-lines', 'lines');
+
+			// Run once on load so the lab section has something visible
+			replayLab();
+
+			// ---- 08 Manual trigger ----
+			const manualSplit = document.getElementById('manual-split');
+			document.getElementById('manual-go').addEventListener('click', () => {
+				manualSplit.reveal();
+			});
+			document.getElementById('manual-replay').addEventListener('click', () => {
+				manualSplit.split();
+				manualSplit.reveal();
+			});
+
+			// ---- 09 Events ----
+			document.querySelectorAll('[data-events] split-text').forEach((el) => {
+				el.addEventListener('split-text:start', (e) => console.log('split-text:start', e.detail));
+				el.addEventListener('split-text:complete', (e) =>
+					console.log('split-text:complete', e.detail)
+				);
+			});
+		</script>
+	</body>
+</html>

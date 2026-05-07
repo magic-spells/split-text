@@ -200,6 +200,11 @@
 				}
 			}));
 		}
+		#isInsideInteractive(element) {
+			if (!element) return false;
+			const interactive = element.closest("a[href], button, summary, label, input, select, textarea, [contenteditable=\"\"], [contenteditable=\"true\"], [role=\"button\"], [role=\"link\"], [role=\"checkbox\"], [role=\"menuitem\"], [role=\"tab\"], [tabindex]:not([tabindex=\"-1\"])");
+			return Boolean(interactive) && this.contains(interactive) && interactive !== this;
+		}
 		#collectTextNodes() {
 			const _ = this;
 			const nodes = [];
@@ -214,23 +219,25 @@
 			let index = 0;
 			for (const textNode of _.#collectTextNodes()) {
 				const text = textNode.nodeValue;
+				const insideInteractive = _.#isInsideInteractive(textNode.parentElement);
 				const fragment = document.createDocumentFragment();
 				let cursor = 0;
 				let match;
 				wordRegex.lastIndex = 0;
 				while ((match = wordRegex.exec(text)) !== null) {
 					if (match.index > cursor) fragment.appendChild(document.createTextNode(text.slice(cursor, match.index)));
-					fragment.appendChild(_.#wrapWord(match[0], index++));
+					fragment.appendChild(_.#wrapWord(match[0], index++, insideInteractive));
 					cursor = match.index + match[0].length;
 				}
 				if (cursor < text.length) fragment.appendChild(document.createTextNode(text.slice(cursor)));
 				textNode.parentNode.replaceChild(fragment, textNode);
 			}
 		}
-		#wrapWord(text, index) {
+		#wrapWord(text, index, insideInteractive) {
 			const _ = this;
 			const outer = document.createElement("span");
 			outer.className = "split-text-word";
+			if (!insideInteractive) outer.setAttribute("aria-hidden", "true");
 			const inner = document.createElement("span");
 			inner.className = "split-text-word-inner";
 			inner.style.setProperty("--i", index);
@@ -246,6 +253,7 @@
 			let index = 0;
 			for (const textNode of _.#collectTextNodes()) {
 				const text = textNode.nodeValue;
+				const insideInteractive = _.#isInsideInteractive(textNode.parentElement);
 				const fragment = document.createDocumentFragment();
 				let cursor = 0;
 				let match;
@@ -254,6 +262,7 @@
 					if (match.index > cursor) fragment.appendChild(document.createTextNode(text.slice(cursor, match.index)));
 					const wordOuter = document.createElement("span");
 					wordOuter.className = "split-text-word";
+					if (!insideInteractive) wordOuter.setAttribute("aria-hidden", "true");
 					const graphemes = segmenter ? Array.from(segmenter.segment(match[0]), (s) => s.segment) : Array.from(match[0]);
 					for (const grapheme of graphemes) {
 						const charOuter = document.createElement("span");

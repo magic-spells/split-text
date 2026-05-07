@@ -166,9 +166,10 @@ Once animation completes, the host gets `data-revealed` and CSS sets every inter
 
 ## Accessibility
 
-- The host's `aria-label` is set to the original plain text (so screen readers read the sentence once, not span by span)
-- `prefers-reduced-motion: reduce` disables the animation entirely; content shows immediately
-- In chars mode, word wrappers are marked `aria-hidden="true"` so AT doesn't read text letter-by-letter
+- The host's `aria-label` is set to the original plain text, so screen readers announce the sentence once instead of wrapper-by-wrapper.
+- Generated word wrappers are marked `aria-hidden="true"` to prevent the AT from re-reading the same text the `aria-label` already covers.
+- Per the ARIA spec, `aria-hidden` is **skipped on wrappers inside interactive ancestors** (`<a>`, `<button>`, `<summary>`, form controls, `[role="button"]`, focusable `[tabindex]`, etc.). Nested links and buttons retain their accessible names.
+- `prefers-reduced-motion: reduce` disables the animation entirely; content shows immediately.
 
 ## Browser Support
 
@@ -177,3 +178,9 @@ Modern browsers with custom elements + `IntersectionObserver` support (Chrome, F
 ## License
 
 MIT
+
+---
+
+<p align="center">
+  Made by <a href="https://github.com/coryschulz">Cory Schulz</a>
+</p>

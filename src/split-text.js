@@ -266,6 +266,19 @@ class SplitText extends HTMLElement {
 		);
 	}
 
+	// Per ARIA spec, aria-hidden must not be on or contain focusable elements.
+	// We add aria-hidden to generated word wrappers to prevent AT from
+	// double-reading (host's aria-label already provides the accessible name),
+	// but skip wrappers whose text sits inside an interactive ancestor so we
+	// don't strip the accessible name from links/buttons inside the host.
+	#isInsideInteractive(element) {
+		if (!element) return false;
+		const interactive = element.closest(
+			'a[href], button, summary, label, input, select, textarea, [contenteditable=""], [contenteditable="true"], [role="button"], [role="link"], [role="checkbox"], [role="menuitem"], [role="tab"], [tabindex]:not([tabindex="-1"])'
+		);
+		return Boolean(interactive) && this.contains(interactive) && interactive !== this;
+	}
+
 	#collectTextNodes() {
 		const _ = this;
 		const nodes = [];
@@ -287,6 +300,7 @@ class SplitText extends HTMLElement {
 
 		for (const textNode of _.#collectTextNodes()) {
 			const text = textNode.nodeValue;
+			const insideInteractive = _.#isInsideInteractive(textNode.parentElement);
 			const fragment = document.createDocumentFragment();
 			let cursor = 0;
 			let match;
@@ -295,7 +309,7 @@ class SplitText extends HTMLElement {
 				if (match.index > cursor) {
 					fragment.appendChild(document.createTextNode(text.slice(cursor, match.index)));
 				}
-				fragment.appendChild(_.#wrapWord(match[0], index++));
+				fragment.appendChild(_.#wrapWord(match[0], index++, insideInteractive));
 				cursor = match.index + match[0].length;
 			}
 			if (cursor < text.length) {
@@ -305,10 +319,11 @@ class SplitText extends HTMLElement {
 		}
 	}
 
-	#wrapWord(text, index) {
+	#wrapWord(text, index, insideInteractive) {
 		const _ = this;
 		const outer = document.createElement('span');
 		outer.className = 'split-text-word';
+		if (!insideInteractive) outer.setAttribute('aria-hidden', 'true');
 		const inner = document.createElement('span');
 		inner.className = 'split-text-word-inner';
 		inner.style.setProperty('--i', index);
@@ -330,6 +345,7 @@ class SplitText extends HTMLElement {
 
 		for (const textNode of _.#collectTextNodes()) {
 			const text = textNode.nodeValue;
+			const insideInteractive = _.#isInsideInteractive(textNode.parentElement);
 			const fragment = document.createDocumentFragment();
 			let cursor = 0;
 			let match;
@@ -341,6 +357,7 @@ class SplitText extends HTMLElement {
 
 				const wordOuter = document.createElement('span');
 				wordOuter.className = 'split-text-word';
+				if (!insideInteractive) wordOuter.setAttribute('aria-hidden', 'true');
 
 				const graphemes = segmenter
 					? Array.from(segmenter.segment(match[0]), (s) => s.segment)

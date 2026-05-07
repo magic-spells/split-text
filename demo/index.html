@@ -145,6 +145,16 @@
 				justify-content: center;
 				gap: 2.5rem;
 				flex-wrap: wrap;
+				margin: 0 auto 1.25rem;
+				max-width: 680px;
+				padding: 0 1.5rem;
+			}
+
+			.install-specs {
+				display: flex;
+				justify-content: center;
+				gap: 2.5rem;
+				flex-wrap: wrap;
 				margin: 0 auto 3rem;
 				max-width: 680px;
 				padding: 0 1.5rem;
@@ -602,13 +612,15 @@
 				<span class="install-label">Install</span>
 				<code class="install-value">npm i @magic-spells/split-text</code>
 			</div>
+		</div>
+		<div class="install-specs">
 			<div class="install-item">
 				<span class="install-label">JS (gzip)</span>
-				<span class="install-size">2.0 KB</span>
+				<span class="install-size">2.5 KB</span>
 			</div>
 			<div class="install-item">
 				<span class="install-label">CSS (gzip)</span>
-				<span class="install-size">0.4 KB</span>
+				<span class="install-size">0.5 KB</span>
 			</div>
 			<div class="install-item">
 				<span class="install-label">Dependencies</span>
@@ -901,12 +913,39 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 				</div>
 			</section>
 
-			<!-- ---- 11 Reference ---- -->
+			<!-- ---- 11 Trigger offset ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">11 — Reference</span>
+				<span class="demo-eyebrow">11 — Trigger offset</span>
+				<h2>Choose <em>when</em> it fires.</h2>
+				<p class="demo-desc">
+					By default the animation fires the moment the element peeks in from the bottom of the
+					viewport. Set <code>offset</code> to push the trigger line up — accepts pixels
+					(<code>"200px"</code>) or a percentage of viewport height (<code>"20%"</code>). The line
+					below waits until it's 200px above the bottom edge before animating.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline">
+						<split-text offset="200px" stagger="40">
+							Triggered 200px above the bottom edge.
+						</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">offset</span>=<span class="hl-val">"200px"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+<span class="hl-cm">// or a percentage of viewport height:</span>
+&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">offset</span>=<span class="hl-val">"20%"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+				</div>
+			</section>
+
+			<!-- ---- 12 Reference ---- -->
+			<section class="demo-section">
+				<span class="demo-eyebrow">12 — Reference</span>
 				<h2>The whole API, on one screen.</h2>
 				<p class="demo-desc">
-					Six attributes, five custom properties, two methods, two events. That's everything.
+					Eight attributes, five custom properties, two methods, two events. That's everything.
 				</p>
 
 				<h3 class="ref-heading">Attributes</h3>
@@ -934,6 +973,9 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 					</div>
 					<div class="ref-row">
 						<div><code>threshold</code></div><div><code>0.1</code></div><div>IntersectionObserver threshold (0–1)</div>
+					</div>
+					<div class="ref-row">
+						<div><code>offset</code></div><div><em>none</em></div><div>Distance above bottom of viewport before firing (e.g. <code>"200px"</code>, <code>"20%"</code>)</div>
 					</div>
 				</div>
 

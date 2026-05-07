@@ -22,6 +22,7 @@ const DEFAULTS = {
  *   easing    — CSS easing function (default cubic-bezier(0.16, 1, 0.3, 1))
  *   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
  *   threshold — IntersectionObserver threshold, 0–1 (default 0.1)
+ *   offset    — distance from bottom of viewport before firing (e.g. "200px", "20%")
  */
 class SplitText extends HTMLElement {
 	#originalHTML;
@@ -157,19 +158,32 @@ class SplitText extends HTMLElement {
 
 		// Default: trigger="visible"
 		const threshold = Math.min(1, Math.max(0, _.#numericAttr('threshold', DEFAULTS.threshold)));
-		_.#observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						_.#observer?.disconnect();
-						_.#observer = null;
-						_.#reveal();
-						break;
-					}
+		const observerOptions = { threshold };
+
+		// `offset` shifts the trigger line up from the bottom of the viewport.
+		// Accepts a number (px) or a string like "20%" (% of viewport height).
+		const offset = _.getAttribute('offset');
+		if (offset !== null && offset !== '') {
+			const trimmed = offset.trim();
+			const isPercent = trimmed.endsWith('%');
+			const value = parseFloat(trimmed);
+			if (Number.isFinite(value) && value > 0) {
+				observerOptions.rootMargin = isPercent
+					? `0px 0px -${value}% 0px`
+					: `0px 0px -${value}px 0px`;
+			}
+		}
+
+		_.#observer = new IntersectionObserver((entries) => {
+			for (const entry of entries) {
+				if (entry.isIntersecting) {
+					_.#observer?.disconnect();
+					_.#observer = null;
+					_.#reveal();
+					break;
 				}
-			},
-			{ threshold }
-		);
+			}
+		}, observerOptions);
 		_.#observer.observe(_);
 	}
 

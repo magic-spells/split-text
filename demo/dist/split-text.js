@@ -24,6 +24,7 @@
 	*   easing    — CSS easing function (default cubic-bezier(0.16, 1, 0.3, 1))
 	*   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
 	*   threshold — IntersectionObserver threshold, 0–1 (default 0.1)
+	*   offset    — distance from bottom of viewport before firing (e.g. "200px", "20%")
 	*/
 	var SplitText = class extends HTMLElement {
 		#originalHTML;
@@ -120,7 +121,14 @@
 				queueMicrotask(() => _.#reveal());
 				return;
 			}
-			const threshold = Math.min(1, Math.max(0, _.#numericAttr("threshold", DEFAULTS.threshold)));
+			const observerOptions = { threshold: Math.min(1, Math.max(0, _.#numericAttr("threshold", DEFAULTS.threshold))) };
+			const offset = _.getAttribute("offset");
+			if (offset !== null && offset !== "") {
+				const trimmed = offset.trim();
+				const isPercent = trimmed.endsWith("%");
+				const value = parseFloat(trimmed);
+				if (Number.isFinite(value) && value > 0) observerOptions.rootMargin = isPercent ? `0px 0px -${value}% 0px` : `0px 0px -${value}px 0px`;
+			}
 			_.#observer = new IntersectionObserver((entries) => {
 				for (const entry of entries) if (entry.isIntersecting) {
 					_.#observer?.disconnect();
@@ -128,7 +136,7 @@
 					_.#reveal();
 					break;
 				}
-			}, { threshold });
+			}, observerOptions);
 			_.#observer.observe(_);
 		}
 		async #reveal() {

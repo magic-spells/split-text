@@ -83,6 +83,18 @@ That's it. The element splits on words by default and animates as soon as it scr
 </script>
 ```
 
+### Adjusting the trigger position
+
+`offset` shifts the trigger line up from the bottom of the viewport. By default, the animation fires the moment the element peeks in from below. Add an `offset` to delay it until the element is further into view.
+
+```html
+<!-- Trigger when the element is 200px above the bottom of the viewport -->
+<split-text offset="200px">…</split-text>
+
+<!-- Trigger when the element is 20% of viewport height above the bottom -->
+<split-text offset="20%">…</split-text>
+```
+
 ### Custom Easing
 
 ```html
@@ -104,15 +116,16 @@ Inline tags inside the host are preserved. Links remain clickable, emphasis stil
 
 ## Attributes
 
-| Attribute   | Default                              | Description                                     |
-| ----------- | ------------------------------------ | ----------------------------------------------- |
-| `split`     | `words`                              | `words`, `chars`, or `lines`                    |
-| `delay`     | `0`                                  | Initial delay before animation starts (ms)      |
-| `stagger`   | `30`                                 | Delay between each unit (ms)                    |
-| `duration`  | `800`                                | Animation duration per unit (ms)                |
-| `easing`    | `cubic-bezier(0.16, 1, 0.3, 1)`      | CSS easing function                             |
-| `trigger`   | `visible`                            | `visible`, `load`, or `manual`                  |
-| `threshold` | `0.1`                                | IntersectionObserver threshold (0–1)            |
+| Attribute     | Default                         | Description                                          |
+| ------------- | ------------------------------- | ---------------------------------------------------- |
+| `split`       | `words`                         | `words`, `chars`, or `lines`                         |
+| `delay`       | `0`                             | Initial delay before animation starts (ms)           |
+| `stagger`     | `30`                            | Delay between each unit (ms)                         |
+| `duration`    | `800`                           | Animation duration per unit (ms)                     |
+| `easing`      | `cubic-bezier(0.16, 1, 0.3, 1)` | CSS easing function                                  |
+| `trigger`     | `visible`                       | `visible`, `load`, or `manual`                       |
+| `threshold`   | `0.1`                           | IntersectionObserver threshold (0–1)                 |
+| `offset`      | _(none)_                        | Distance above bottom of viewport before firing (px or %) |
 
 ## CSS Custom Properties
 

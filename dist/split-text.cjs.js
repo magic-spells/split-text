@@ -1,3 +1,5 @@
+'use strict';
+
 const DEFAULTS = {
 	split: 'words',
 	delay: 0,
@@ -422,5 +424,5 @@ if (!customElements.get('split-text')) {
 	customElements.define('split-text', SplitText);
 }
 
-export { SplitText };
-//# sourceMappingURL=split-text.esm.js.map
+exports.SplitText = SplitText;
+//# sourceMappingURL=split-text.cjs.js.map

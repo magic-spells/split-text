@@ -31,38 +31,53 @@ class SplitText extends HTMLElement {
 	#revealed = false;
 	#splitMode;
 	#units = [];
+	#lineCount = 0;
 
 	connectedCallback() {
 		const _ = this;
-		if (_.#initialized) return;
-		_.#initialized = true;
+		if (_.#revealed) return;
 
-		_.#originalHTML = _.innerHTML;
+		if (!_.#initialized) {
+			_.#initialized = true;
 
-		// Use the plain text as the host's accessible name so screen readers
-		// read the sentence once instead of one wrapped span at a time
-		const labelText = _.textContent.replace(/\s+/g, ' ').trim();
-		if (labelText && !_.hasAttribute('aria-label')) {
-			_.setAttribute('aria-label', labelText);
+			_.#originalHTML = _.innerHTML;
+
+			// Use the plain text as the host's accessible name so screen readers
+			// read the sentence once instead of one wrapped span at a time
+			const labelText = _.textContent.replace(/\s+/g, ' ').trim();
+			if (labelText && !_.hasAttribute('aria-label')) {
+				_.setAttribute('aria-label', labelText);
+			}
+
+			_.#splitMode = _.getAttribute('split') || DEFAULTS.split;
+
+			if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				_.#markRevealed();
+				return;
+			}
+
+			_.#applyTimingProperties();
+
+			// Words and chars don't depend on layout — split eagerly so the
+			// pre-animation state is correct before paint.
+			// Lines depends on measured layout, so defer to reveal time.
+			if (_.#splitMode === 'words') _.#splitWords();
+			else if (_.#splitMode === 'chars') _.#splitChars();
+		} else {
+			// Reconnecting before reveal — re-check reduced-motion and re-apply
+			// timing in case the user adopted us into a new document.
+			if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+				_.#markRevealed();
+				return;
+			}
+			_.#applyTimingProperties();
 		}
+
+		// Lines mode defers wrapping until reveal — mask the host so the raw
+		// text doesn't flash before measurement.
+		if (_.#splitMode === 'lines') _.setAttribute('data-state', 'splitting');
 
 		_.#abortController = new AbortController();
-		_.#splitMode = _.getAttribute('split') || DEFAULTS.split;
-
-		// Honor reduced-motion preference: show as-is, no animation
-		if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-			_.#markRevealed();
-			return;
-		}
-
-		_.#applyTimingProperties();
-
-		// Words and chars don't depend on layout — split eagerly so the
-		// pre-animation state is correct before paint.
-		// Lines depends on measured layout, so defer to reveal time.
-		if (_.#splitMode === 'words') _.#splitWords();
-		else if (_.#splitMode === 'chars') _.#splitChars();
-
 		_.#setupTrigger();
 	}
 
@@ -82,7 +97,12 @@ class SplitText extends HTMLElement {
 	}
 
 	/**
-	 * Re-run splitting (call this if the original innerHTML changed at runtime).
+	 * Re-run splitting. Smart behavior:
+	 * - If the DOM is currently in its split/wrapped state (post-reveal or
+	 *   between renders), the original snapshot is restored and re-split —
+	 *   useful for replaying the animation.
+	 * - If the user has replaced innerHTML with fresh content, that content
+	 *   becomes the new source.
 	 */
 	split() {
 		const _ = this;
@@ -91,11 +111,18 @@ class SplitText extends HTMLElement {
 		_.#abortController?.abort();
 		_.#abortController = null;
 		_.#units = [];
+		_.#lineCount = 0;
 		_.#initialized = false;
 		_.#revealed = false;
 		_.removeAttribute('data-state');
 		_.removeAttribute('data-revealed');
-		if (_.#originalHTML !== undefined) _.innerHTML = _.#originalHTML;
+
+		const isWrapped = _.querySelector('.split-text-word, .split-text-char') !== null;
+		if (isWrapped) {
+			if (_.#originalHTML !== undefined) _.innerHTML = _.#originalHTML;
+		} else {
+			_.#originalHTML = _.innerHTML;
+		}
 		_.connectedCallback();
 	}
 
@@ -129,7 +156,7 @@ class SplitText extends HTMLElement {
 		}
 
 		// Default: trigger="visible"
-		const threshold = _.#numericAttr('threshold', DEFAULTS.threshold);
+		const threshold = Math.min(1, Math.max(0, _.#numericAttr('threshold', DEFAULTS.threshold)));
 		_.#observer = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
@@ -168,25 +195,41 @@ class SplitText extends HTMLElement {
 			return;
 		}
 
+		const count = _.#splitMode === 'lines' ? _.#lineCount : _.#units.length;
+
 		_.dispatchEvent(
 			new CustomEvent('split-text:start', {
 				bubbles: true,
-				detail: { split: _.#splitMode, count: _.#units.length },
+				detail: { split: _.#splitMode, count },
 			})
 		);
 
 		// Listen for animationend on the unit with the highest --i so we know
-		// when the entire reveal is done. Avoids setTimeout drift.
+		// when the entire reveal is done. Also listen for animationcancel and
+		// a fallback timeout so author CSS that disables the animation can't
+		// strand the host in `data-state="revealing"`.
 		const lastUnit = _.#lastAnimatingUnit();
 		if (lastUnit && _.#abortController) {
-			lastUnit.addEventListener(
-				'animationend',
-				(event) => {
-					if (event.target !== lastUnit) return;
-					_.#markRevealed();
-				},
-				{ once: true, signal: _.#abortController.signal }
-			);
+			const finish = (event) => {
+				if (event && event.target !== lastUnit) return;
+				_.#markRevealed();
+			};
+			lastUnit.addEventListener('animationend', finish, {
+				once: true,
+				signal: _.#abortController.signal,
+			});
+			lastUnit.addEventListener('animationcancel', finish, {
+				once: true,
+				signal: _.#abortController.signal,
+			});
+
+			const totalMs =
+				_.#numericAttr('delay', DEFAULTS.delay) +
+				_.#numericAttr('stagger', DEFAULTS.stagger) * Math.max(0, _.#units.length - 1) +
+				_.#numericAttr('duration', DEFAULTS.duration) +
+				100;
+			const fallback = setTimeout(() => _.#markRevealed(), totalMs);
+			_.#abortController.signal.addEventListener('abort', () => clearTimeout(fallback));
 		}
 
 		_.setAttribute('data-state', 'revealing');
@@ -211,12 +254,14 @@ class SplitText extends HTMLElement {
 
 	#markRevealed() {
 		const _ = this;
+		if (_.hasAttribute('data-revealed')) return;
 		_.removeAttribute('data-state');
 		_.setAttribute('data-revealed', '');
+		const count = _.#splitMode === 'lines' ? _.#lineCount : _.#units.length;
 		_.dispatchEvent(
 			new CustomEvent('split-text:complete', {
 				bubbles: true,
-				detail: { split: _.#splitMode, count: _.#units.length },
+				detail: { split: _.#splitMode, count },
 			})
 		);
 	}
@@ -296,7 +341,6 @@ class SplitText extends HTMLElement {
 
 				const wordOuter = document.createElement('span');
 				wordOuter.className = 'split-text-word';
-				wordOuter.setAttribute('aria-hidden', 'true');
 
 				const graphemes = segmenter
 					? Array.from(segmenter.segment(match[0]), (s) => s.segment)
@@ -327,6 +371,7 @@ class SplitText extends HTMLElement {
 	#splitLines() {
 		const _ = this;
 		_.#units = [];
+		_.#lineCount = 0;
 		_.#splitWords();
 
 		const wordSpans = Array.from(_.querySelectorAll('.split-text-word'));
@@ -371,6 +416,7 @@ class SplitText extends HTMLElement {
 			}
 		}
 		_.#units = newUnits;
+		_.#lineCount = newUnits.length === 0 ? 0 : lineIndex + 1;
 	}
 }
 

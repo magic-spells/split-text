@@ -1,89 +1,68 @@
-/* Hide host until customElements.define runs (avoids flash of split-incomplete content) */
 split-text:not(:defined) {
-	visibility: hidden;
+  visibility: hidden;
 }
 
-/* Lines mode wraps lazily — keep the raw text invisible until measured */
-split-text[data-state='splitting'] {
-	visibility: hidden;
+split-text[data-state="splitting"] {
+  visibility: hidden;
 }
 
 split-text {
-	--split-text-duration: 800ms;
-	--split-text-easing: cubic-bezier(0.16, 1, 0.3, 1);
-	--split-text-distance: 100%;
-	--split-text-stagger: 30ms;
-	--split-text-delay: 0ms;
-	display: inline;
+  --split-text-duration: .8s;
+  --split-text-easing: cubic-bezier(.16, 1, .3, 1);
+  --split-text-distance: 100%;
+  --split-text-stagger: 30ms;
+  --split-text-delay: 0s;
+  display: inline;
 }
 
-split-text .split-text-word,
-split-text .split-text-char {
-	display: inline-block;
-	overflow: hidden;
-	/* overflow:hidden re-defines an inline-block's baseline as its bottom edge,
-	   which would lift the wrapper up off the surrounding baseline. Anchor to
-	   the top of the line box so the content sits where it should. */
-	vertical-align: top;
+split-text .split-text-word, split-text .split-text-char {
+  vertical-align: top;
+  display: inline-block;
+  overflow: hidden;
 }
 
-split-text .split-text-word-inner,
-split-text .split-text-char-inner {
-	display: inline-block;
-	transform: translateY(var(--split-text-distance));
-	opacity: 0;
-	will-change: transform, opacity;
+split-text .split-text-word-inner, split-text .split-text-char-inner {
+  transform: translateY(var(--split-text-distance));
+  opacity: 0;
+  will-change: transform, opacity;
+  display: inline-block;
 }
 
-split-text[data-state='revealing'] .split-text-word-inner,
-split-text[data-state='revealing'] .split-text-char-inner {
-	animation: split-text-rise var(--split-text-duration) var(--split-text-easing) both;
-	animation-delay: calc(var(--split-text-delay) + var(--i, 0) * var(--split-text-stagger));
+split-text[data-state="revealing"] .split-text-word-inner, split-text[data-state="revealing"] .split-text-char-inner {
+  animation: split-text-rise var(--split-text-duration) var(--split-text-easing) both;
+  animation-delay: calc(var(--split-text-delay) + var(--i, 0) * var(--split-text-stagger));
 }
 
 @keyframes split-text-rise {
-	from {
-		transform: translateY(var(--split-text-distance));
-		opacity: 0;
-	}
-	to {
-		transform: translateY(0);
-		opacity: 1;
-	}
+  from {
+    transform: translateY(var(--split-text-distance));
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/*
- * After reveal:
- * - Words/lines mode → word wrappers become transparent to layout so text
- *   reflows naturally on resize (kerning was always intra-word, so no shift).
- * - Chars mode → keep char wrappers as inline-block so adjacent letters don't
- *   suddenly kern into a tighter text run. We only lift the overflow mask so
- *   descenders aren't clipped.
- */
-split-text:not([split='chars'])[data-revealed] .split-text-word,
-split-text:not([split='chars'])[data-revealed] .split-text-word-inner {
-	display: contents;
+split-text:not([split="chars"])[data-revealed] .split-text-word, split-text:not([split="chars"])[data-revealed] .split-text-word-inner {
+  display: contents;
 }
 
-split-text[split='chars'][data-revealed] .split-text-word,
-split-text[split='chars'][data-revealed] .split-text-char {
-	overflow: visible;
+split-text[split="chars"][data-revealed] .split-text-word, split-text[split="chars"][data-revealed] .split-text-char {
+  overflow: visible;
 }
 
-/* Pin the rest state explicitly. Without this, removing data-state takes the
-   animation rule with it (and its fill:both end state), so any inner that
-   isn't display:contents would snap back to the pre-animation translateY/opacity. */
-split-text[data-revealed] .split-text-word-inner,
-split-text[data-revealed] .split-text-char-inner {
-	transform: none;
-	opacity: 1;
+split-text[data-revealed] .split-text-word-inner, split-text[data-revealed] .split-text-char-inner {
+  opacity: 1;
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	split-text .split-text-word-inner,
-	split-text .split-text-char-inner {
-		animation: none;
-		transform: none;
-		opacity: 1;
-	}
+  split-text .split-text-word-inner, split-text .split-text-char-inner {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
 }
+/*$vite$:1*/

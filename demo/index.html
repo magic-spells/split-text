@@ -246,17 +246,6 @@
 				background: var(--bg-card-hover);
 			}
 
-			.demo-eyebrow {
-				font-family: var(--font-body);
-				font-size: 0.65rem;
-				font-weight: 400;
-				letter-spacing: 0.25em;
-				text-transform: uppercase;
-				color: var(--gold);
-				margin-bottom: 1.25rem;
-				display: block;
-			}
-
 			.demo-section h2 {
 				font-family: var(--font-display);
 				font-weight: 400;
@@ -650,7 +639,6 @@ npm i @magic-spells/split-text
 		<main class="demos">
 			<!-- ---- 01 Words ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">01 — Words mode</span>
 				<h2>Each word, on its own.</h2>
 				<p class="demo-desc">
 					The default mode. Words slide up sequentially with a 30ms stagger. Drop in a
@@ -672,7 +660,6 @@ npm i @magic-spells/split-text
 
 			<!-- ---- 02 Chars ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">02 — Characters</span>
 				<h2>Letter by letter.</h2>
 				<p class="demo-desc">
 					Use <code>split="chars"</code> for grapheme-level animation. Emoji and accented characters
@@ -696,7 +683,6 @@ npm i @magic-spells/split-text
 
 			<!-- ---- 03 Lines ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">03 — Lines mode</span>
 				<h2>Every line, together.</h2>
 				<p class="demo-desc">
 					<code>split="lines"</code> measures word positions after layout, groups them by their
@@ -723,7 +709,6 @@ npm i @magic-spells/split-text
 
 			<!-- ---- 04 Inline markup ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">04 — Inline markup preserved</span>
 				<h2>Links still <em>link</em>.</h2>
 				<p class="demo-desc">
 					Wrap whatever you want — <code>&lt;em&gt;</code>, <code>&lt;strong&gt;</code>,
@@ -748,7 +733,6 @@ npm i @magic-spells/split-text
 
 			<!-- ---- 05 Stagger lab ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">05 — Stagger lab</span>
 				<h2>Tune the timing.</h2>
 				<p class="demo-desc">
 					Adjust delay, stagger, and duration. Click <strong>Replay</strong> to re-run with new
@@ -795,7 +779,6 @@ npm i @magic-spells/split-text
 
 			<!-- ---- 06 Easing ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">06 — Easing</span>
 				<h2>Curves that <em>feel</em>.</h2>
 				<p class="demo-desc">
 					Pass any CSS easing through the <code>easing</code> attribute, or override the
@@ -824,7 +807,6 @@ npm i @magic-spells/split-text
 
 			<!-- ---- 07 Distance + initial delay ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">07 — Distance &amp; pause</span>
 				<h2>A subtler rise.</h2>
 				<p class="demo-desc">
 					<code>--split-text-distance</code> controls how far each unit travels. Pair a short
@@ -850,7 +832,6 @@ npm i @magic-spells/split-text
 
 			<!-- ---- 08 Manual trigger ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">08 — Manual trigger</span>
 				<h2>Drive it yourself.</h2>
 				<p class="demo-desc">
 					Set <code>trigger="manual"</code> and call <code>.reveal()</code> from JavaScript when you
@@ -876,7 +857,6 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 			<!-- ---- 09 Events ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">09 — Events</span>
 				<h2>Listen in.</h2>
 				<p class="demo-desc">
 					Each component fires <code>split-text:start</code> and <code>split-text:complete</code>.
@@ -899,7 +879,6 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 			<!-- ---- 10 Reduced motion ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">10 — Accessibility</span>
 				<h2>Respect for reduced motion.</h2>
 				<p class="demo-desc">
 					When the OS preference is "reduce motion," the component skips animation entirely and
@@ -915,7 +894,6 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 			<!-- ---- 11 Trigger offset ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">11 — Trigger offset</span>
 				<h2>Choose <em>when</em> it fires.</h2>
 				<p class="demo-desc">
 					By default the animation fires the moment the element peeks in from the bottom of the
@@ -942,7 +920,6 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 			<!-- ---- 12 Reference ---- -->
 			<section class="demo-section">
-				<span class="demo-eyebrow">12 — Reference</span>
 				<h2>The whole API, on one screen.</h2>
 				<p class="demo-desc">
 					Eight attributes, five custom properties, two methods, two events. That's everything.

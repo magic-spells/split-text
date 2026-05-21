@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Web component that splits its text into words, characters, or lines and animates each unit into view with a slide-up + fade-in stagger. Pure CSS animation; the JS just walks the DOM, wraps text nodes, and toggles a `data-state` attribute. No dependencies. Designed as a small alternative to GSAP SplitText / Splitting.js.
+Web component that splits its text into words, characters, or lines and animates each unit into view with a CSS-driven stagger. Ships seven effects out of the box (`rise`, `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y`) — pure CSS keyframes, no JS animation. The JS just walks the DOM, wraps text nodes, and toggles a `data-state` attribute. No dependencies. Designed as a small alternative to GSAP SplitText / Splitting.js.
 
 ## Key files
 
@@ -24,10 +24,22 @@ Web component that splits its text into words, characters, or lines and animates
 
 ## API
 
-- Attributes: `split` (`words`/`chars`/`lines`), `delay`, `stagger`, `duration`, `easing`, `trigger` (`visible`/`load`/`manual`), `threshold`
-- CSS custom properties: `--split-text-duration`, `--split-text-easing`, `--split-text-distance`, `--split-text-stagger`, `--split-text-delay`
+- Attributes: `split` (`words`/`chars`/`lines`), `effect` (`rise`/`drop`/`slide-right`/`slide-left`/`bloom`/`spin-x`/`spin-y`), `delay`, `stagger`, `duration`, `easing`, `trigger` (`visible`/`load`/`manual`), `offset`
+- CSS custom properties: `--split-text-duration`, `--split-text-easing`, `--split-text-distance`, `--split-text-stagger`, `--split-text-delay`, `--split-text-perspective` (3D spin camera), `--split-text-origin` (spin pivot), `--split-text-blur` / `--split-text-scale` (bloom starting state)
 - Methods: `reveal()`, `split()`
 - Events: `split-text:start`, `split-text:complete` — both bubble, both detail `{ split, count }`
+
+## Effect mechanics
+
+- Each effect is a single `@keyframes` rule. The base `[data-state='revealing']` selector sets `animation: split-text-rise ...` with shared duration/easing/delay/stagger. Per-effect selectors override only `animation-name` (and `transform-origin` for spin variants), so timing knobs work uniformly across effects.
+- Bloom uses `transform: scale()` + `filter: blur()` + `opacity`. The `data-revealed` rest state pins `transform: none; filter: none; opacity: 1` so the cleanup is uniform.
+- Spin variants (`spin-x`, `spin-y`) need a 3D context; host has `perspective: var(--split-text-perspective, 2000px)` set unconditionally — no-op for 2D effects. Default origins: `bottom` for spin-x, `left` for spin-y (override via `--split-text-origin`).
+
+## Trigger semantics
+
+- `trigger="visible"` (default) uses an `IntersectionObserver` with hardcoded `threshold: 1` — the animation fires only when 100% of the host element is within the (possibly offset-shrunken) viewport. There's no `threshold` attribute; if a user wants a different trigger position they adjust `offset`.
+- `offset` defaults to `"20%"` — applied as `rootMargin: 0 0 -20% 0`, which shrinks the bottom 20% of the viewport from the observer's perspective so the animation fires once the element has scrolled into a comfortable reading position. Set `offset="0"` to disable. Accepts `Npx` or `N%`.
+- Edge case: elements taller than the offset-shrunken viewport never reach 100% intersection and won't fire. Not a concern for typical headline / paragraph use; if it bites, use `offset="0"` as the escape hatch.
 
 ## Conventions
 
@@ -43,6 +55,6 @@ Web component that splits its text into words, characters, or lines and animates
 ## Commands
 
 - `npm run build` — production build to `dist/` (clean rebuild, minified UMD via terser, CSS via lightningcss)
-- `npm run dev` — watch mode, builds to `demo/dist/`, starts Vite dev server at `http://localhost:3000`
+- `npm run dev` — watch mode, builds to `demo/dist/`, starts Vite dev server at `http://localhost:3000`. Uses `@magic-spells/vite-plugin-live-reload` (also a Magic Spells package) to auto-reload the demo on rebuild and bypass Vite's stale-cache CSS transform for files served via `<link>`.
 - `npm run lint` — ESLint over `src/` and `scripts/`
 - `npm run format` — Prettier write

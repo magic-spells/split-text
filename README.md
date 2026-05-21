@@ -1,6 +1,6 @@
 # Split Text Web Component
 
-Lightweight text-reveal web component. Splits text into words, characters, or detected lines, then animates each unit with a CSS-driven stagger. Seven built-in effects — rise, drop, slide, bloom, and two 3D spins. No dependencies. No framework. ~2 KB gzipped.
+Lightweight text-reveal web component. Splits text into words, characters, or detected lines, then animates each unit with a CSS-driven stagger. Seven built-in effects — rise, drop, slide, bloom, and two 3D spins. No dependencies. No framework. ~2.6 KB gzipped (JS) + 0.8 KB (CSS).
 
 A small alternative to GSAP SplitText / Splitting.js when you don't need the rest of those libraries.
 

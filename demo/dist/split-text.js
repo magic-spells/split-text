@@ -10,7 +10,7 @@
 		duration: 800,
 		easing: "cubic-bezier(0.16, 1, 0.3, 1)",
 		trigger: "visible",
-		threshold: .1
+		offset: "20%"
 	};
 	/**
 	* Custom element that splits its text content into words, characters, or lines
@@ -23,8 +23,8 @@
 	*   duration  — animation duration, in ms (default 800)
 	*   easing    — CSS easing function (default cubic-bezier(0.16, 1, 0.3, 1))
 	*   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
-	*   threshold — IntersectionObserver threshold, 0–1 (default 0.1)
-	*   offset    — distance from bottom of viewport before firing (e.g. "200px", "20%")
+	*   offset    — distance from bottom of viewport before firing (default "20%"; set "0" to disable)
+	*   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y"
 	*/
 	var SplitText = class extends HTMLElement {
 		#originalHTML;
@@ -122,15 +122,12 @@
 				queueMicrotask(() => _.#reveal());
 				return;
 			}
-			const observerOptions = { threshold: Math.min(1, Math.max(0, _.#numericAttr("threshold", DEFAULTS.threshold))) };
-			const offset = _.getAttribute("offset");
-			if (offset) {
-				const match = offset.trim().match(/^(\d*\.?\d+)(px|%)?$/);
-				if (match) {
-					const value = parseFloat(match[1]);
-					const isPercent = match[2] === "%";
-					if (Number.isFinite(value) && value > 0) observerOptions.rootMargin = isPercent ? `0px 0px -${value}% 0px` : `0px 0px -${value}px 0px`;
-				}
+			const observerOptions = { threshold: 1 };
+			const match = (_.getAttribute("offset") ?? DEFAULTS.offset).trim().match(/^(\d*\.?\d+)(px|%)?$/);
+			if (match) {
+				const value = parseFloat(match[1]);
+				const isPercent = match[2] === "%";
+				if (Number.isFinite(value) && value > 0) observerOptions.rootMargin = isPercent ? `0px 0px -${value}% 0px` : `0px 0px -${value}px 0px`;
 			}
 			_.#observer = new IntersectionObserver((entries) => {
 				for (const entry of entries) if (entry.isIntersecting) {

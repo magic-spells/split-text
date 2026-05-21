@@ -22,9 +22,9 @@
 				--gold: #c9a84c;
 				--gold-dim: #8a7233;
 				--gold-glow: rgba(201, 168, 76, 0.12);
-				--cream: #e8e0cc;
-				--cream-dim: #9a9284;
-				--text: #c4bfb2;
+				--cream: #f6f2e8;
+				--cream-dim: #b8b1a2;
+				--text: #ebe7dc;
 				--text-dim: #6b665c;
 				--font-display: 'Cormorant Garamond', Georgia, serif;
 				--font-body: 'Outfit', system-ui, sans-serif;
@@ -371,6 +371,12 @@
 				box-shadow: 0 0 20px rgba(201, 168, 76, 0.1);
 			}
 
+			.btn.is-active {
+				border-color: var(--gold);
+				color: var(--gold);
+				background: var(--gold-glow);
+			}
+
 			.btn:active {
 				transform: translateY(1px);
 			}
@@ -402,6 +408,13 @@
 				letter-spacing: 0.18em;
 				text-transform: uppercase;
 				color: var(--text-dim);
+			}
+
+			.controls-group {
+				display: flex;
+				flex-direction: column;
+				gap: 0.55rem;
+				margin-top: 0.9rem;
 			}
 
 			.slider-value {
@@ -588,7 +601,7 @@
 				<split-text trigger="load" stagger="60" duration="900" delay="500" split="words">that <em>rise</em>.</split-text>
 			</h1>
 			<p class="hero-tagline">
-				<split-text trigger="load" stagger="20" delay="1000">
+				<split-text trigger="load" effect="bloom" split="chars" stagger="15" duration="900" delay="1000">
 					A tiny web component that splits text and animates it into view, by word, character, or line.
 				</split-text>
 			</p>
@@ -731,13 +744,137 @@ npm i @magic-spells/split-text
 				</div>
 			</section>
 
-			<!-- ---- 05 Stagger lab ---- -->
+			<!-- ---- 05 Drop ---- -->
+			<section class="demo-section">
+				<h2>Or fall in from above.</h2>
+				<p class="demo-desc">
+					Set <code>effect="drop"</code> to mirror the default rise — words descend into place
+					instead of rising up. Same timing knobs, same fade.
+				</p>
+				<div class="demo-stage">
+					<p class="stage-headline">
+						<split-text effect="drop">Words that land where they belong.</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"drop"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+				</div>
+			</section>
+
+			<!-- ---- 06 Slide ---- -->
+			<section class="demo-section">
+				<h2>Slide in from either side.</h2>
+				<p class="demo-desc">
+					<code>effect="slide-right"</code> sweeps each unit in from the right;
+					<code>slide-left</code> mirrors it. Pairs nicely with <code>split="chars"</code> for a
+					typewriter-meets-marquee feel.
+				</p>
+				<div class="demo-stage tall">
+					<p class="stage-headline" style="margin-bottom: 1.25rem">
+						<split-text effect="slide-right" split="chars" stagger="18" duration="700">
+							Sliding in from the right.
+						</split-text>
+					</p>
+					<p class="stage-headline">
+						<split-text effect="slide-left" split="chars" stagger="18" duration="700">
+							And from the left.
+						</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"slide-right"</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;<br />
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"slide-left"</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+				</div>
+			</section>
+
+			<!-- ---- 07 Bloom ---- -->
+			<section class="demo-section">
+				<h2>Bloom into focus.</h2>
+				<p class="demo-desc">
+					<code>effect="bloom"</code> starts each unit blurred and slightly scaled-down, then
+					sharpens it in place. No translate — letters appear right where they belong and just
+					come into focus. Tune the starting state with <code>--split-text-blur</code> and
+					<code>--split-text-scale</code>.
+				</p>
+				<div class="demo-stage tall">
+					<p class="stage-headline" style="margin-bottom: 1.25rem">
+						<split-text effect="bloom" split="chars" stagger="35" duration="900">
+							A gentle focus into view.
+						</split-text>
+					</p>
+					<p
+						class="stage-headline"
+						style="--split-text-blur: 12px; --split-text-scale: 0.4"
+					>
+						<split-text effect="bloom" split="chars" stagger="45" duration="1100">
+							Dialed up for drama.
+						</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"bloom"</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;<br />
+					<span class="hl-cm">/* override via CSS custom properties */</span><br />
+					<span class="hl-attr">style</span>=<span class="hl-val">"--split-text-blur: 12px; --split-text-scale: 0.4"</span>
+				</div>
+			</section>
+
+			<!-- ---- 08 Spin ---- -->
+			<section class="demo-section">
+				<h2>Spin into place.</h2>
+				<p class="demo-desc">
+					Two 3D variants. <code>spin-x</code> tilts each unit up from the baseline (rotateX,
+					origin <code>bottom</code>). <code>spin-y</code> swings each unit open like a door
+					(rotateY, origin <code>left</code>). The host sets <code>perspective: 2000px</code> by
+					default — tune via <code>--split-text-perspective</code>, and shift the pivot with
+					<code>--split-text-origin</code>.
+				</p>
+				<div class="demo-stage tall">
+					<p class="stage-headline" style="margin-bottom: 1.25rem">
+						<split-text effect="spin-x" split="chars" stagger="28" duration="900">
+							Standing up from the baseline.
+						</split-text>
+					</p>
+					<p class="stage-headline" style="margin-bottom: 1.25rem">
+						<split-text effect="spin-y" split="chars" stagger="28" duration="900">
+							Swinging open like a door.
+						</split-text>
+					</p>
+					<p
+						class="stage-headline"
+						style="--split-text-origin: center; --split-text-perspective: 600px"
+					>
+						<split-text effect="spin-y" split="chars" stagger="35" duration="1000">
+							Same effect, center pivot, closer camera.
+						</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"spin-x"</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;<br />
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"spin-y"</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;<br />
+					<span class="hl-cm">/* override pivot & perspective via CSS */</span><br />
+					<span class="hl-attr">style</span>=<span class="hl-val">"--split-text-origin: center; --split-text-perspective: 600px"</span>
+				</div>
+			</section>
+
+			<!-- ---- 09 Stagger lab ---- -->
 			<section class="demo-section">
 				<h2>Tune the timing.</h2>
 				<p class="demo-desc">
-					Adjust delay, stagger, and duration. Click <strong>Replay</strong> to re-run with new
-					values. The reset uses the public <code>.split()</code> method — same DOM, fresh
-					animation.
+					Adjust delay, stagger, and duration with the sliders. Swap the split mode, effect, or
+					easing curve with the buttons — every change re-runs through
+					<code>.split()</code> + <code>.reveal()</code>, same DOM, fresh animation.
 				</p>
 				<div class="demo-stage">
 					<p class="stage-headline" id="lab-stage">
@@ -771,9 +908,32 @@ npm i @magic-spells/split-text
 				</div>
 				<div class="controls">
 					<button class="btn" id="lab-replay">Replay</button>
-					<button class="btn" id="lab-words">Words</button>
-					<button class="btn" id="lab-chars">Chars</button>
-					<button class="btn" id="lab-lines">Lines</button>
+					<button class="btn" data-lab-split="lines">Lines</button>
+					<button class="btn" data-lab-split="words">Words</button>
+					<button class="btn" data-lab-split="chars">Chars</button>
+				</div>
+				<div class="controls-group">
+					<span class="slider-label">Effect</span>
+					<div class="controls">
+						<button class="btn" data-lab-effect="rise">Rise</button>
+						<button class="btn" data-lab-effect="drop">Drop</button>
+						<button class="btn" data-lab-effect="slide-right">Slide &rarr;</button>
+						<button class="btn" data-lab-effect="slide-left">Slide &larr;</button>
+						<button class="btn" data-lab-effect="bloom">Bloom</button>
+						<button class="btn" data-lab-effect="spin-x">Spin X</button>
+						<button class="btn" data-lab-effect="spin-y">Spin Y</button>
+					</div>
+				</div>
+				<div class="controls-group">
+					<span class="slider-label">Easing</span>
+					<div class="controls">
+						<button class="btn" data-lab-easing="cubic-bezier(0.16, 1, 0.3, 1)">Default</button>
+						<button class="btn" data-lab-easing="cubic-bezier(0.34, 1.56, 0.64, 1)">Spring</button>
+						<button class="btn" data-lab-easing="cubic-bezier(0.34, 2.5, 0.5, 1)">Bouncy</button>
+						<button class="btn" data-lab-easing="ease-out">Ease out</button>
+						<button class="btn" data-lab-easing="cubic-bezier(0.85, 0, 0.15, 1)">Snap</button>
+						<button class="btn" data-lab-easing="linear">Linear</button>
+					</div>
 				</div>
 			</section>
 
@@ -877,34 +1037,19 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 				</div>
 			</section>
 
-			<!-- ---- 10 Reduced motion ---- -->
-			<section class="demo-section">
-				<h2>Respect for reduced motion.</h2>
-				<p class="demo-desc">
-					When the OS preference is "reduce motion," the component skips animation entirely and
-					shows content immediately. The host's <code>aria-label</code> is set from the original
-					text content, so screen readers read the sentence once instead of word by word.
-				</p>
-				<div class="demo-stage">
-					<p class="stage-headline">
-						<split-text>Honest defaults. Quiet motion. Accessible by design.</split-text>
-					</p>
-				</div>
-			</section>
-
-			<!-- ---- 11 Trigger offset ---- -->
+			<!-- ---- 10 Trigger offset ---- -->
 			<section class="demo-section">
 				<h2>Choose <em>when</em> it fires.</h2>
 				<p class="demo-desc">
-					By default the animation fires the moment the element peeks in from the bottom of the
-					viewport. Set <code>offset</code> to push the trigger line up — accepts pixels
-					(<code>"200px"</code>) or a percentage of viewport height (<code>"20%"</code>). The line
-					below waits until it's 200px above the bottom edge before animating.
+					By default text waits until the element is <code>20%</code> of the viewport above the
+					bottom edge — so it doesn't animate while still peeking in from below. Override
+					<code>offset</code> with a pixel value, a different percentage, or <code>"0"</code> to
+					disable. The line below waits until it's 400px above the bottom edge before animating.
 				</p>
 				<div class="demo-stage">
 					<p class="stage-headline">
-						<split-text offset="200px" stagger="40">
-							Triggered 200px above the bottom edge.
+						<split-text offset="400px" stagger="40">
+							Triggered 400px above the bottom edge.
 						</split-text>
 					</p>
 				</div>
@@ -912,9 +1057,9 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 					<button class="btn" data-replay>Replay</button>
 				</div>
 				<div class="code-block">
-					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">offset</span>=<span class="hl-val">"200px"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
-<span class="hl-cm">// or a percentage of viewport height:</span>
-&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">offset</span>=<span class="hl-val">"20%"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+					&lt;<span class="hl-tag">split-text</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt; <span class="hl-cm">// default: offset="20%"</span><br />
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">offset</span>=<span class="hl-val">"400px"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt; <span class="hl-cm">// custom pixel value</span><br />
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">offset</span>=<span class="hl-val">"0"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt; <span class="hl-cm">// disable, fire on first intersection</span>
 				</div>
 			</section>
 
@@ -922,7 +1067,7 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 			<section class="demo-section">
 				<h2>The whole API, on one screen.</h2>
 				<p class="demo-desc">
-					Eight attributes, five custom properties, two methods, two events. That's everything.
+					Eight attributes, nine custom properties, two methods, two events. That's everything.
 				</p>
 
 				<h3 class="ref-heading">Attributes</h3>
@@ -932,6 +1077,9 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 					</div>
 					<div class="ref-row">
 						<div><code>split</code></div><div><code>words</code></div><div><code>words</code> · <code>chars</code> · <code>lines</code></div>
+					</div>
+					<div class="ref-row">
+						<div><code>effect</code></div><div><code>rise</code></div><div><code>rise</code> · <code>drop</code> · <code>slide-right</code> · <code>slide-left</code> · <code>bloom</code> · <code>spin-x</code> · <code>spin-y</code></div>
 					</div>
 					<div class="ref-row">
 						<div><code>delay</code></div><div><code>0</code></div><div>Initial delay before first unit (ms)</div>
@@ -949,10 +1097,7 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 						<div><code>trigger</code></div><div><code>visible</code></div><div><code>visible</code> · <code>load</code> · <code>manual</code></div>
 					</div>
 					<div class="ref-row">
-						<div><code>threshold</code></div><div><code>0.1</code></div><div>IntersectionObserver threshold (0–1)</div>
-					</div>
-					<div class="ref-row">
-						<div><code>offset</code></div><div><em>none</em></div><div>Distance above bottom of viewport before firing (e.g. <code>"200px"</code>, <code>"20%"</code>)</div>
+						<div><code>offset</code></div><div><code>20%</code></div><div>Distance above bottom of viewport before firing (e.g. <code>"200px"</code>, <code>"20%"</code>; set <code>"0"</code> to disable)</div>
 					</div>
 				</div>
 
@@ -968,13 +1113,25 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 						<div><code>--split-text-easing</code></div><div><code>cubic-bezier(0.16, 1, 0.3, 1)</code></div><div>Animation easing</div>
 					</div>
 					<div class="ref-row">
-						<div><code>--split-text-distance</code></div><div><code>100%</code></div><div>How far each unit travels up</div>
+						<div><code>--split-text-distance</code></div><div><code>100%</code></div><div>Travel distance for rise / drop / slide</div>
 					</div>
 					<div class="ref-row">
 						<div><code>--split-text-stagger</code></div><div><code>30ms</code></div><div>Delay between units</div>
 					</div>
 					<div class="ref-row">
 						<div><code>--split-text-delay</code></div><div><code>0ms</code></div><div>Initial delay</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-perspective</code></div><div><code>2000px</code></div><div>3D camera distance (spin effects)</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-origin</code></div><div>per-effect</div><div><code>transform-origin</code> for spin (defaults: <code>bottom</code> for spin-x, <code>left</code> for spin-y)</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-blur</code></div><div><code>2px</code></div><div>Bloom starting blur radius</div>
+					</div>
+					<div class="ref-row">
+						<div><code>--split-text-scale</code></div><div><code>0.7</code></div><div>Bloom starting scale</div>
 					</div>
 				</div>
 
@@ -996,6 +1153,17 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 						<div><code>split-text:complete</code></div><div>event</div><div>Fires after the last unit settles</div>
 					</div>
 				</div>
+
+				<h3 class="ref-heading">Accessibility</h3>
+				<p class="demo-desc">
+					When the OS preference is <em>reduce motion</em>, the component skips animation
+					entirely and renders content immediately — no transforms, no blur, no fade. The host's
+					<code>aria-label</code> is set from the original plain text, so screen readers read the
+					sentence once instead of one wrapped span at a time. Generated word and character
+					wrappers are marked <code>aria-hidden</code>, except inside interactive ancestors
+					(<code>&lt;a&gt;</code>, <code>&lt;button&gt;</code>, etc.) where the accessible name
+					must be preserved.
+				</p>
 
 				<h3 class="ref-heading">Browser support</h3>
 				<p class="demo-desc" style="margin-bottom: 0">
@@ -1068,15 +1236,30 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 			document.getElementById('lab-replay').addEventListener('click', replayLab);
 
-			const labModeBtn = (id, mode) => {
-				document.getElementById(id).addEventListener('click', () => {
-					labSplit.setAttribute('split', mode);
-					replayLab();
-				});
+			// All three toggle groups (split / effect / easing) share the same
+			// wiring: data-lab-<attr> on each button carries the value, the
+			// helper sets it on the lab element, toggles the active class, and
+			// re-runs the animation.
+			const labSection = labSplit.closest('.demo-section');
+			const wireLabGroup = (attr, defaultValue) => {
+				const buttons = labSection.querySelectorAll(`[data-lab-${attr}]`);
+				const setActive = (target) => {
+					for (const b of buttons) b.classList.toggle('is-active', b === target);
+				};
+				for (const btn of buttons) {
+					btn.addEventListener('click', () => {
+						labSplit.setAttribute(attr, btn.getAttribute(`data-lab-${attr}`));
+						setActive(btn);
+						replayLab();
+					});
+					if (btn.getAttribute(`data-lab-${attr}`) === defaultValue) {
+						btn.classList.add('is-active');
+					}
+				}
 			};
-			labModeBtn('lab-words', 'words');
-			labModeBtn('lab-chars', 'chars');
-			labModeBtn('lab-lines', 'lines');
+			wireLabGroup('split', 'words');
+			wireLabGroup('effect', 'rise');
+			wireLabGroup('easing', 'cubic-bezier(0.16, 1, 0.3, 1)');
 
 			// Run once on load so the lab section has something visible
 			replayLab();

@@ -1,6 +1,7 @@
 import { build, createServer } from 'vite';
 import { rm, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import liveReload from '@magic-spells/vite-plugin-live-reload';
 
 const isDev = process.env.NODE_ENV === 'development';
 const outDir = isDev ? 'demo/dist' : 'dist';
@@ -107,6 +108,7 @@ async function main() {
 			configFile: false,
 			root: 'demo',
 			server: { port: 3000, open: true, strictPort: false },
+			plugins: [liveReload('demo/dist')],
 		});
 		await server.listen();
 		server.printUrls();

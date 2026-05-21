@@ -7,7 +7,7 @@ const DEFAULTS = {
 	duration: 800,
 	easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
 	trigger: 'visible',
-	threshold: 0.1,
+	offset: '20%',
 };
 
 /**
@@ -21,8 +21,8 @@ const DEFAULTS = {
  *   duration  — animation duration, in ms (default 800)
  *   easing    — CSS easing function (default cubic-bezier(0.16, 1, 0.3, 1))
  *   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
- *   threshold — IntersectionObserver threshold, 0–1 (default 0.1)
- *   offset    — distance from bottom of viewport before firing (e.g. "200px", "20%")
+ *   offset    — distance from bottom of viewport before firing (default "20%"; set "0" to disable)
+ *   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y"
  */
 class SplitText extends HTMLElement {
 	#originalHTML;
@@ -157,23 +157,26 @@ class SplitText extends HTMLElement {
 			return;
 		}
 
-		// Default: trigger="visible"
-		const threshold = Math.min(1, Math.max(0, _.#numericAttr('threshold', DEFAULTS.threshold)));
-		const observerOptions = { threshold };
+		// Default: trigger="visible". Fire only when 100% of the element is
+		// within the (possibly offset-shrunken) viewport — so users never see
+		// the text animate while still partially below the fold.
+		const observerOptions = { threshold: 1 };
 
-		// `offset` shifts the trigger line up from the bottom of the viewport.
-		// Accepts a bare number (px), "Npx", or "N%" — other units are ignored.
-		const offset = _.getAttribute('offset');
-		if (offset) {
-			const match = offset.trim().match(/^(\d*\.?\d+)(px|%)?$/);
-			if (match) {
-				const value = parseFloat(match[1]);
-				const isPercent = match[2] === '%';
-				if (Number.isFinite(value) && value > 0) {
-					observerOptions.rootMargin = isPercent
-						? `0px 0px -${value}% 0px`
-						: `0px 0px -${value}px 0px`;
-				}
+		// `offset` shifts the trigger line up from the bottom of the viewport so
+		// the text starts animating after the element has scrolled meaningfully
+		// into view. Accepts a bare number (px), "Npx", or "N%" — other units
+		// are ignored. Set "0" (or "0%"/"0px") to disable and fire on first
+		// intersection. Defaults to "20%".
+		const offsetAttr = _.getAttribute('offset');
+		const offset = offsetAttr ?? DEFAULTS.offset;
+		const match = offset.trim().match(/^(\d*\.?\d+)(px|%)?$/);
+		if (match) {
+			const value = parseFloat(match[1]);
+			const isPercent = match[2] === '%';
+			if (Number.isFinite(value) && value > 0) {
+				observerOptions.rootMargin = isPercent
+					? `0px 0px -${value}% 0px`
+					: `0px 0px -${value}px 0px`;
 			}
 		}
 

@@ -1,6 +1,6 @@
 # Split Text Web Component
 
-Lightweight text-reveal web component. Slides text into view from below an invisible line — by word, character, or detected line — with a CSS-driven stagger. No dependencies. No framework. ~2 KB gzipped.
+Lightweight text-reveal web component. Splits text into words, characters, or detected lines, then animates each unit with a CSS-driven stagger. Seven built-in effects — rise, drop, slide, bloom, and two 3D spins. No dependencies. No framework. ~2 KB gzipped.
 
 A small alternative to GSAP SplitText / Splitting.js when you don't need the rest of those libraries.
 
@@ -8,8 +8,9 @@ A small alternative to GSAP SplitText / Splitting.js when you don't need the res
 
 ## Features
 
-- Three modes: `words`, `chars`, `lines` (auto-detected from layout)
-- CSS-only animation — `transform` and `opacity` only, GPU-accelerated
+- Three split modes: `words`, `chars`, `lines` (auto-detected from layout)
+- Seven effects: `rise` (default), `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y`
+- CSS-only animation — `transform`, `opacity`, and `filter`, GPU-accelerated
 - Triggers when scrolled into view by default (configurable: `load`, `manual`)
 - Preserves inline markup (`<em>`, `<strong>`, `<a>`, `<br>`) inside the host
 - Emoji-safe character splitting via `Intl.Segmenter`
@@ -59,6 +60,31 @@ That's it. The element splits on words by default and animates as soon as it scr
 </split-text>
 ```
 
+### Effects
+
+```html
+<!-- rise (default) — slides up from below -->
+<split-text>Rises into view.</split-text>
+
+<!-- drop — falls in from above -->
+<split-text effect="drop">Falls into place.</split-text>
+
+<!-- slide-right / slide-left — sweeps in horizontally -->
+<split-text effect="slide-right" split="chars">Sliding in from the right.</split-text>
+<split-text effect="slide-left" split="chars">And from the left.</split-text>
+
+<!-- bloom — blur + scale pop, no translate -->
+<split-text effect="bloom" split="chars">Comes into focus.</split-text>
+
+<!-- spin-x — rotateX flip (origin: bottom by default) -->
+<split-text effect="spin-x" split="chars">Stands up from baseline.</split-text>
+
+<!-- spin-y — rotateY flip (origin: left by default) -->
+<split-text effect="spin-y" split="chars">Swings open like a door.</split-text>
+```
+
+The 3D spin effects rely on `perspective: 2000px` set on the host by default. Override with `--split-text-perspective`, and shift the pivot with `--split-text-origin`. The bloom effect's starting state is tunable via `--split-text-blur` and `--split-text-scale`.
+
 ### Timing
 
 ```html
@@ -70,8 +96,8 @@ That's it. The element splits on words by default and animates as soon as it scr
 ### Triggers
 
 ```html
-<!-- Default: animate when scrolled into view -->
-<split-text trigger="visible" threshold="0.25">…</split-text>
+<!-- Default: animate when scrolled into view (waits until 100% visible) -->
+<split-text trigger="visible">…</split-text>
 
 <!-- Animate immediately on load -->
 <split-text trigger="load">…</split-text>
@@ -85,14 +111,17 @@ That's it. The element splits on words by default and animates as soon as it scr
 
 ### Adjusting the trigger position
 
-`offset` shifts the trigger line up from the bottom of the viewport. By default, the animation fires the moment the element peeks in from below. Add an `offset` to delay it until the element is further into view.
+`offset` shifts the trigger line up from the bottom of the viewport. The default is `"20%"` — text animates once the element has scrolled into the bottom fifth of the viewport, rather than the instant it peeks in.
 
 ```html
-<!-- Trigger when the element is 200px above the bottom of the viewport -->
+<!-- Default — 20% of viewport height above the bottom -->
+<split-text>…</split-text>
+
+<!-- Custom: 200px above the bottom of the viewport -->
 <split-text offset="200px">…</split-text>
 
-<!-- Trigger when the element is 20% of viewport height above the bottom -->
-<split-text offset="20%">…</split-text>
+<!-- Disable the offset — fire on first intersection -->
+<split-text offset="0">…</split-text>
 ```
 
 ### Custom Easing
@@ -119,25 +148,29 @@ Inline tags inside the host are preserved. Links remain clickable, emphasis stil
 | Attribute     | Default                         | Description                                          |
 | ------------- | ------------------------------- | ---------------------------------------------------- |
 | `split`       | `words`                         | `words`, `chars`, or `lines`                         |
+| `effect`      | `rise`                          | `rise`, `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y` |
 | `delay`       | `0`                             | Initial delay before animation starts (ms)           |
 | `stagger`     | `30`                            | Delay between each unit (ms)                         |
 | `duration`    | `800`                           | Animation duration per unit (ms)                     |
 | `easing`      | `cubic-bezier(0.16, 1, 0.3, 1)` | CSS easing function                                  |
 | `trigger`     | `visible`                       | `visible`, `load`, or `manual`                       |
-| `threshold`   | `0.1`                           | IntersectionObserver threshold (0–1)                 |
-| `offset`      | _(none)_                        | Distance above bottom of viewport before firing (px or %) |
+| `offset`      | `20%`                           | Distance above bottom of viewport before firing (px or %; set `0` to disable) |
 
 ## CSS Custom Properties
 
 Override these for theming. They're already wired through the CSS — set them on the host or any ancestor.
 
-| Property                  | Default                         | Description                                  |
-| ------------------------- | ------------------------------- | -------------------------------------------- |
-| `--split-text-duration`   | `800ms`                         | Animation duration                           |
-| `--split-text-easing`     | `cubic-bezier(0.16, 1, 0.3, 1)` | Animation easing                             |
-| `--split-text-distance`   | `100%`                          | Translation distance (try `40%` for subtler) |
-| `--split-text-stagger`    | `30ms`                          | Delay between units                          |
-| `--split-text-delay`      | `0ms`                           | Initial delay                                |
+| Property                    | Default                         | Description                                                                  |
+| --------------------------- | ------------------------------- | ---------------------------------------------------------------------------- |
+| `--split-text-duration`     | `800ms`                         | Animation duration                                                           |
+| `--split-text-easing`       | `cubic-bezier(0.16, 1, 0.3, 1)` | Animation easing                                                             |
+| `--split-text-distance`     | `100%`                          | Travel distance for `rise` / `drop` / `slide-*` (try `40%` for subtler)      |
+| `--split-text-stagger`      | `30ms`                          | Delay between units                                                          |
+| `--split-text-delay`        | `0ms`                           | Initial delay                                                                |
+| `--split-text-perspective`  | `2000px`                        | 3D camera distance — applies to `spin-x` / `spin-y`                          |
+| `--split-text-origin`       | _per-effect_                    | `transform-origin` for spin (defaults: `bottom` for spin-x, `left` for spin-y) |
+| `--split-text-blur`         | `2px`                           | Bloom starting blur radius                                                   |
+| `--split-text-scale`        | `0.7`                           | Bloom starting scale                                                         |
 
 ```css
 split-text {
@@ -171,7 +204,7 @@ el.addEventListener('split-text:complete', (e) => {
 
 ## How it works
 
-The script walks the host's text nodes, wraps each word (or grapheme, in chars mode) in two nested spans — an outer mask with `overflow: hidden` and an inner element that translates from `translateY(100%)` to `translateY(0)`. Each inner span gets a `--i` index; CSS computes `animation-delay` from it.
+The script walks the host's text nodes, wraps each word (or grapheme, in chars mode) in two nested spans — an outer mask with `overflow: hidden` and an inner element that animates from a pre-reveal state to its final position. Each inner span gets a `--i` index; CSS computes `animation-delay` from it. The `effect` attribute selects which keyframe runs — duration, easing, and stagger are shared across every effect.
 
 For lines mode, the script splits into words first, measures each word's `getBoundingClientRect().top` after layout, groups consecutive words by their top position (with tolerance for sub-pixel rendering), and assigns every word in a line the same `--i`. Words are never re-parented, so any inline markup inside (links, emphasis, etc.) survives the split.
 

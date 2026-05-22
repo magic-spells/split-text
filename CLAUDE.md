@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Web component that splits its text into words, characters, or lines and animates each unit into view with a CSS-driven stagger. Ships seven effects out of the box (`rise`, `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y`) — pure CSS keyframes, no JS animation. The JS just walks the DOM, wraps text nodes, and toggles a `data-state` attribute. No dependencies. Designed as a small alternative to GSAP SplitText / Splitting.js.
+Web component that splits its text into words, characters, or lines and animates each unit into view with a CSS-driven stagger. Ships eight effects out of the box (`rise`, `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y`, `magnetic`) — pure CSS keyframes, no JS animation. The JS just walks the DOM, wraps text nodes, and toggles a `data-state` attribute. The lone exception is `magnetic`, where JS stamps each unit with random per-character start offsets (`--split-text-mx` / `--split-text-my`), since CSS can't randomize. No dependencies. Designed as a small alternative to GSAP SplitText / Splitting.js.
 
 ## Key files
 
@@ -24,8 +24,8 @@ Web component that splits its text into words, characters, or lines and animates
 
 ## API
 
-- Attributes: `split` (`words`/`chars`/`lines`), `effect` (`rise`/`drop`/`slide-right`/`slide-left`/`bloom`/`spin-x`/`spin-y`), `delay`, `stagger`, `duration`, `easing`, `trigger` (`visible`/`load`/`manual`), `offset`
-- CSS custom properties: `--split-text-duration`, `--split-text-easing`, `--split-text-distance`, `--split-text-stagger`, `--split-text-delay`, `--split-text-perspective` (3D spin camera), `--split-text-origin` (spin pivot), `--split-text-blur` / `--split-text-scale` (bloom starting state)
+- Attributes: `split` (`words`/`chars`/`lines`), `effect` (`rise`/`drop`/`slide-right`/`slide-left`/`bloom`/`spin-x`/`spin-y`/`magnetic`), `delay`, `stagger`, `duration`, `easing`, `trigger` (`visible`/`load`/`manual`), `offset`
+- CSS custom properties: `--split-text-duration`, `--split-text-easing`, `--split-text-distance`, `--split-text-stagger`, `--split-text-delay`, `--split-text-perspective` (3D spin camera), `--split-text-origin` (spin pivot), `--split-text-blur` (bloom + magnetic starting blur) / `--split-text-scale` (bloom starting state), `--split-text-mx` / `--split-text-my` (magnetic per-unit start offset, set by JS)
 - Methods: `reveal()`, `split()`
 - Events: `split-text:start`, `split-text:complete` — both bubble, both detail `{ split, count }`
 
@@ -34,6 +34,7 @@ Web component that splits its text into words, characters, or lines and animates
 - Each effect is a single `@keyframes` rule. The base `[data-state='revealing']` selector sets `animation: split-text-rise ...` with shared duration/easing/delay/stagger. Per-effect selectors override only `animation-name` (and `transform-origin` for spin variants), so timing knobs work uniformly across effects.
 - Bloom uses `transform: scale()` + `filter: blur()` + `opacity`. The `data-revealed` rest state pins `transform: none; filter: none; opacity: 1` so the cleanup is uniform.
 - Spin variants (`spin-x`, `spin-y`) need a 3D context; host has `perspective: var(--split-text-perspective, 2000px)` set unconditionally — no-op for 2D effects. Default origins: `bottom` for spin-x, `left` for spin-y (override via `--split-text-origin`).
+- Magnetic breaks the pure-CSS pattern: `#applyMagneticOffset()` writes a random `--split-text-mx` (always rightward: base 10px + 10–100px extra) and `--split-text-my` (±100px) onto each inner span during splitting. The keyframe and the pre-reveal initial state both read those props, so each piece flies in from its own spot. It's also the only effect that overrides the wrappers to `overflow: visible` (pieces travel outside their box), and it defaults `--split-text-easing` to an ease-in curve (`MAGNETIC_EASING`) so they accelerate into a snap — overridden by an explicit `easing` attribute. `.split()` reshuffles the offsets. Magnitudes live in the `MAGNETIC_*` constants in `src/split-text.js`.
 
 ## Trigger semantics
 

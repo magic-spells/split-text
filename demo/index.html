@@ -872,6 +872,31 @@ npm i @magic-spells/split-text
 				</div>
 			</section>
 
+			<!-- ---- 09 Magnetic ---- -->
+			<section class="demo-section">
+				<h2>Pulled into <em>place</em>.</h2>
+				<p class="demo-desc">
+					<code>effect="magnetic"</code> scatters each character — every piece starts shifted off to
+					the right by a random distance, at a random height, blurred and transparent. An ease-in
+					curve makes them drift slowly then snap home, like filings pulled to a magnet. Unlike the
+					other effects, the pieces are never clipped, so they can travel well outside their box.
+					Built for <code>split="chars"</code>.
+				</p>
+				<div class="demo-stage tall">
+					<p class="stage-headline">
+						<split-text effect="magnetic" split="chars" stagger="25" duration="900">
+							Snapped into focus.
+						</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
+				<div class="code-block">
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"magnetic"</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+				</div>
+			</section>
+
 			<!-- ---- 09 Stagger lab ---- -->
 			<section class="demo-section">
 				<h2>Tune the timing.</h2>
@@ -929,6 +954,7 @@ npm i @magic-spells/split-text
 						<button class="btn" data-lab-effect="bloom">Bloom</button>
 						<button class="btn" data-lab-effect="spin-x">Spin X</button>
 						<button class="btn" data-lab-effect="spin-y">Spin Y</button>
+						<button class="btn" data-lab-effect="magnetic">Magnetic</button>
 					</div>
 				</div>
 				<div class="controls-group">
@@ -1086,7 +1112,7 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 						<div><code>split</code></div><div><code>words</code></div><div><code>words</code> · <code>chars</code> · <code>lines</code></div>
 					</div>
 					<div class="ref-row">
-						<div><code>effect</code></div><div><code>rise</code></div><div><code>rise</code> · <code>drop</code> · <code>slide-right</code> · <code>slide-left</code> · <code>bloom</code> · <code>spin-x</code> · <code>spin-y</code></div>
+						<div><code>effect</code></div><div><code>rise</code></div><div><code>rise</code> · <code>drop</code> · <code>slide-right</code> · <code>slide-left</code> · <code>bloom</code> · <code>spin-x</code> · <code>spin-y</code> · <code>magnetic</code></div>
 					</div>
 					<div class="ref-row">
 						<div><code>delay</code></div><div><code>0</code></div><div>Initial delay before first unit (ms)</div>
@@ -1135,7 +1161,7 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 						<div><code>--split-text-origin</code></div><div>per-effect</div><div><code>transform-origin</code> for spin (defaults: <code>bottom</code> for spin-x, <code>left</code> for spin-y)</div>
 					</div>
 					<div class="ref-row">
-						<div><code>--split-text-blur</code></div><div><code>2px</code></div><div>Bloom starting blur radius</div>
+						<div><code>--split-text-blur</code></div><div><code>2px</code></div><div>Starting blur radius (bloom &amp; magnetic)</div>
 					</div>
 					<div class="ref-row">
 						<div><code>--split-text-scale</code></div><div><code>0.7</code></div><div>Bloom starting scale</div>

@@ -74,6 +74,21 @@ split-text[effect='spin-y'] .split-text-char-inner {
 	transform-origin: var(--split-text-origin, left);
 }
 
+/* Magnetic: each inner starts at a per-unit random offset (set by JS as
+   --split-text-mx / --split-text-my), blurred and transparent, then snaps home. */
+split-text[effect='magnetic'] .split-text-word-inner,
+split-text[effect='magnetic'] .split-text-char-inner {
+	transform: translate(var(--split-text-mx, 10px), var(--split-text-my, 0));
+	filter: blur(var(--split-text-blur, 2px));
+	will-change: transform, opacity, filter;
+}
+
+/* Pieces fly in from well outside their box, so the wrapper must not clip them. */
+split-text[effect='magnetic'] .split-text-word,
+split-text[effect='magnetic'] .split-text-char {
+	overflow: visible;
+}
+
 split-text[data-state='revealing'] .split-text-word-inner,
 split-text[data-state='revealing'] .split-text-char-inner {
 	animation: split-text-rise var(--split-text-duration) var(--split-text-easing) both;
@@ -110,6 +125,11 @@ split-text[effect='spin-x'][data-state='revealing'] .split-text-char-inner {
 split-text[effect='spin-y'][data-state='revealing'] .split-text-word-inner,
 split-text[effect='spin-y'][data-state='revealing'] .split-text-char-inner {
 	animation-name: split-text-spin-y;
+}
+
+split-text[effect='magnetic'][data-state='revealing'] .split-text-word-inner,
+split-text[effect='magnetic'][data-state='revealing'] .split-text-char-inner {
+	animation-name: split-text-magnetic;
 }
 
 @keyframes split-text-rise {
@@ -187,6 +207,19 @@ split-text[effect='spin-y'][data-state='revealing'] .split-text-char-inner {
 	}
 	to {
 		transform: rotateY(0);
+		opacity: 1;
+	}
+}
+
+@keyframes split-text-magnetic {
+	from {
+		transform: translate(var(--split-text-mx, 10px), var(--split-text-my, 0));
+		filter: blur(var(--split-text-blur, 2px));
+		opacity: 0;
+	}
+	to {
+		transform: translate(0, 0);
+		filter: blur(0);
 		opacity: 1;
 	}
 }

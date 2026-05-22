@@ -1,6 +1,6 @@
 # Split Text Web Component
 
-Lightweight text-reveal web component. Splits text into words, characters, or detected lines, then animates each unit with a CSS-driven stagger. Seven built-in effects — rise, drop, slide, bloom, and two 3D spins. No dependencies. No framework. ~2.6 KB gzipped (JS) + 0.8 KB (CSS).
+Lightweight text-reveal web component. Splits text into words, characters, or detected lines, then animates each unit with a CSS-driven stagger. Eight built-in effects — rise, drop, slide, bloom, two 3D spins, and a per-character magnetic scatter. No dependencies. No framework. ~2.7 KB gzipped (JS) + 0.9 KB (CSS).
 
 A small alternative to GSAP SplitText / Splitting.js when you don't need the rest of those libraries.
 
@@ -9,7 +9,7 @@ A small alternative to GSAP SplitText / Splitting.js when you don't need the res
 ## Features
 
 - Three split modes: `words`, `chars`, `lines` (auto-detected from layout)
-- Seven effects: `rise` (default), `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y`
+- Eight effects: `rise` (default), `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y`, `magnetic`
 - CSS-only animation — `transform`, `opacity`, and `filter`, GPU-accelerated
 - Triggers when scrolled into view by default (configurable: `load`, `manual`)
 - Preserves inline markup (`<em>`, `<strong>`, `<a>`, `<br>`) inside the host
@@ -81,9 +81,14 @@ That's it. The element splits on words by default and animates as soon as it scr
 
 <!-- spin-y — rotateY flip (origin: left by default) -->
 <split-text effect="spin-y" split="chars">Swings open like a door.</split-text>
+
+<!-- magnetic — per-character random scatter, snaps into place -->
+<split-text effect="magnetic" split="chars">Pulled into place.</split-text>
 ```
 
 The 3D spin effects rely on `perspective: 2000px` set on the host by default. Override with `--split-text-perspective`, and shift the pivot with `--split-text-origin`. The bloom effect's starting state is tunable via `--split-text-blur` and `--split-text-scale`.
+
+The `magnetic` effect is built for `split="chars"`. Each character starts shifted to the right by a random distance at a random height, blurred and transparent, then accelerates home on an ease-in curve (override with `easing`). The per-unit offsets are randomized in JS — replaying via `.split()` reshuffles them. Pieces are intentionally not clipped, so they travel outside their box; the starting blur is shared with bloom via `--split-text-blur`.
 
 ### Timing
 
@@ -148,7 +153,7 @@ Inline tags inside the host are preserved. Links remain clickable, emphasis stil
 | Attribute     | Default                         | Description                                          |
 | ------------- | ------------------------------- | ---------------------------------------------------- |
 | `split`       | `words`                         | `words`, `chars`, or `lines`                         |
-| `effect`      | `rise`                          | `rise`, `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y` |
+| `effect`      | `rise`                          | `rise`, `drop`, `slide-right`, `slide-left`, `bloom`, `spin-x`, `spin-y`, `magnetic` |
 | `delay`       | `0`                             | Initial delay before animation starts (ms)           |
 | `stagger`     | `30`                            | Delay between each unit (ms)                         |
 | `duration`    | `800`                           | Animation duration per unit (ms)                     |
@@ -169,7 +174,7 @@ Override these for theming. They're already wired through the CSS — set them o
 | `--split-text-delay`        | `0ms`                           | Initial delay                                                                |
 | `--split-text-perspective`  | `2000px`                        | 3D camera distance — applies to `spin-x` / `spin-y`                          |
 | `--split-text-origin`       | _per-effect_                    | `transform-origin` for spin (defaults: `bottom` for spin-x, `left` for spin-y) |
-| `--split-text-blur`         | `2px`                           | Bloom starting blur radius                                                   |
+| `--split-text-blur`         | `2px`                           | Starting blur radius (`bloom` & `magnetic`)                                  |
 | `--split-text-scale`        | `0.7`                           | Bloom starting scale                                                         |
 
 ```css
@@ -204,7 +209,7 @@ el.addEventListener('split-text:complete', (e) => {
 
 ## How it works
 
-The script walks the host's text nodes, wraps each word (or grapheme, in chars mode) in two nested spans — an outer mask with `overflow: hidden` and an inner element that animates from a pre-reveal state to its final position. Each inner span gets a `--i` index; CSS computes `animation-delay` from it. The `effect` attribute selects which keyframe runs — duration, easing, and stagger are shared across every effect.
+The script walks the host's text nodes, wraps each word (or grapheme, in chars mode) in two nested spans — an outer mask with `overflow: hidden` and an inner element that animates from a pre-reveal state to its final position. Each inner span gets a `--i` index; CSS computes `animation-delay` from it. The `effect` attribute selects which keyframe runs — duration, easing, and stagger are shared across every effect. (The `magnetic` effect is the one exception to the `overflow: hidden` mask: its pieces fly in from outside the box, so the wrapper is set to `overflow: visible`, and JS stamps each inner span with a random `--split-text-mx` / `--split-text-my` start offset.)
 
 For lines mode, the script splits into words first, measures each word's `getBoundingClientRect().top` after layout, groups consecutive words by their top position (with tolerance for sub-pixel rendering), and assigns every word in a line the same `--i`. Words are never re-parented, so any inline markup inside (links, emphasis, etc.) survives the split.
 

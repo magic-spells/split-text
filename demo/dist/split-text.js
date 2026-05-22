@@ -12,6 +12,11 @@
 		trigger: "visible",
 		offset: "20%"
 	};
+	var MAGNETIC_EASING = "cubic-bezier(0.5, 0, 1, 1)";
+	var MAGNETIC_BASE_X = 10;
+	var MAGNETIC_EXTRA_X_MIN = 10;
+	var MAGNETIC_EXTRA_X_MAX = 100;
+	var MAGNETIC_Y_RANGE = 100;
 	/**
 	* Custom element that splits its text content into words, characters, or lines
 	* and animates each unit with a CSS-driven slide-up + fade-in stagger.
@@ -24,7 +29,7 @@
 	*   easing    — CSS easing function (default cubic-bezier(0.16, 1, 0.3, 1))
 	*   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
 	*   offset    — distance from bottom of viewport before firing (default "20%"; set "0" to disable)
-	*   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y"
+	*   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y" | "magnetic"
 	*/
 	var SplitText = class extends HTMLElement {
 		#originalHTML;
@@ -33,6 +38,7 @@
 		#initialized = false;
 		#revealed = false;
 		#splitMode;
+		#effect;
 		#units = [];
 		#lineCount = 0;
 		connectedCallback() {
@@ -45,6 +51,7 @@
 				if (labelText && !_.hasAttribute("aria-label")) _.setAttribute("aria-label", labelText);
 				const splitAttr = _.getAttribute("split");
 				_.#splitMode = splitAttr === "chars" || splitAttr === "lines" ? splitAttr : "words";
+				_.#effect = _.getAttribute("effect") || "rise";
 				if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
 					_.#markRevealed();
 					return;
@@ -101,6 +108,13 @@
 			} else _.#originalHTML = _.innerHTML;
 			_.connectedCallback();
 		}
+		#applyMagneticOffset(inner) {
+			if (this.#effect !== "magnetic") return;
+			const x = MAGNETIC_BASE_X + MAGNETIC_EXTRA_X_MIN + Math.random() * (MAGNETIC_EXTRA_X_MAX - MAGNETIC_EXTRA_X_MIN);
+			const y = Math.random() * (MAGNETIC_Y_RANGE * 2) - MAGNETIC_Y_RANGE;
+			inner.style.setProperty("--split-text-mx", `${x.toFixed(1)}px`);
+			inner.style.setProperty("--split-text-my", `${y.toFixed(1)}px`);
+		}
 		#numericAttr(name, fallback) {
 			const raw = this.getAttribute(name);
 			if (raw === null) return fallback;
@@ -112,7 +126,8 @@
 			_.style.setProperty("--split-text-delay", `${_.#numericAttr("delay", DEFAULTS.delay)}ms`);
 			_.style.setProperty("--split-text-stagger", `${_.#numericAttr("stagger", DEFAULTS.stagger)}ms`);
 			_.style.setProperty("--split-text-duration", `${_.#numericAttr("duration", DEFAULTS.duration)}ms`);
-			_.style.setProperty("--split-text-easing", _.getAttribute("easing") || DEFAULTS.easing);
+			const defaultEasing = _.#effect === "magnetic" ? MAGNETIC_EASING : DEFAULTS.easing;
+			_.style.setProperty("--split-text-easing", _.getAttribute("easing") || defaultEasing);
 		}
 		#setupTrigger() {
 			const _ = this;
@@ -253,6 +268,7 @@
 			const inner = document.createElement("span");
 			inner.className = "split-text-word-inner";
 			inner.style.setProperty("--i", index);
+			_.#applyMagneticOffset(inner);
 			inner.textContent = text;
 			outer.appendChild(inner);
 			_.#units.push(inner);
@@ -282,6 +298,7 @@
 						const charInner = document.createElement("span");
 						charInner.className = "split-text-char-inner";
 						charInner.style.setProperty("--i", index++);
+						_.#applyMagneticOffset(charInner);
 						charInner.textContent = grapheme;
 						charOuter.appendChild(charInner);
 						wordOuter.appendChild(charOuter);

@@ -681,12 +681,17 @@ npm i @magic-spells/split-text
 				<p class="demo-desc">
 					Use <code>split="chars"</code> for grapheme-level animation. Emoji and accented characters
 					stay intact — the splitter uses <code>Intl.Segmenter</code> internally so nothing breaks
-					mid-codepoint.
+					mid-codepoint. Pair it with <code>effect="magnetic"</code> across a longer passage and
+					every character flies in from its own scattered start.
 				</p>
 				<div class="demo-stage">
-					<p class="stage-headline">
-						<split-text split="chars" stagger="20" duration="700">
-							café · résumé · 🌒 · naïve
+					<p class="stage-paragraph">
+						<split-text effect="magnetic" split="chars" stagger="12" duration="500">
+							Type is just a field of points waiting to settle. Give each letter its own
+							trajectory and the whole paragraph assembles itself — pieces drifting in from
+							every direction, snapping into place one grapheme at a time until the words
+							resolve and the line finally holds still. Emoji and accented characters ride
+							along too: café · résumé · 🌒 · naïve.
 						</split-text>
 					</p>
 				</div>
@@ -694,7 +699,7 @@ npm i @magic-spells/split-text
 					<button class="btn" data-replay>Replay</button>
 				</div>
 				<div class="code-block">
-					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"20"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
+					&lt;<span class="hl-tag">split-text</span> <span class="hl-attr">effect</span>=<span class="hl-val">"magnetic"</span> <span class="hl-attr">split</span>=<span class="hl-val">"chars"</span> <span class="hl-attr">stagger</span>=<span class="hl-val">"12"</span>&gt;…&lt;/<span class="hl-tag">split-text</span>&gt;
 				</div>
 			</section>
 

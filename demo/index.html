@@ -72,6 +72,7 @@
 				justify-content: center;
 				padding: 5rem 2rem 3rem;
 				text-align: center;
+				overflow: hidden;
 			}
 
 			.hero::before {
@@ -82,6 +83,8 @@
 				transform: translateX(-50%);
 				width: 900px;
 				height: 900px;
+				max-width: 90%;
+				max-height: 90%;
 				background: radial-gradient(ellipse, var(--gold-glow) 0%, transparent 70%);
 				pointer-events: none;
 			}
@@ -130,6 +133,7 @@
 				line-height: 1.7;
 				color: var(--text);
 				margin-bottom: 0;
+				text-wrap: pretty;
 			}
 
 			.hero-line {
@@ -872,14 +876,18 @@ npm i @magic-spells/split-text
 			<section class="demo-section">
 				<h2>Tune the timing.</h2>
 				<p class="demo-desc">
-					Adjust delay, stagger, and duration with the sliders. Swap the split mode, effect, or
-					easing curve with the buttons — every change re-runs through
-					<code>.split()</code> + <code>.reveal()</code>, same DOM, fresh animation.
+					Adjust delay, stagger, and duration with the sliders.
 				</p>
-				<div class="demo-stage">
-					<p class="stage-headline" id="lab-stage">
-						<split-text id="lab-split" trigger="manual" delay="0" stagger="40" duration="800">
+				<div class="demo-stage tall">
+					<p class="stage-headline" id="lab-stage" style="margin-bottom: 1.25rem">
+						<split-text id="lab-split" class="lab-split" trigger="manual" delay="0" stagger="40" duration="800">
 							Words tuned to your liking.
+						</split-text>
+					</p>
+					<p class="stage-paragraph">
+						<split-text class="lab-split" trigger="manual" delay="0" stagger="40" duration="800">
+							Drag the sliders and the same settings ripple across a longer passage.
+							Every word, character, or line picks up your timing in real time.
 						</split-text>
 					</p>
 				</div>
@@ -907,7 +915,6 @@ npm i @magic-spells/split-text
 					</div>
 				</div>
 				<div class="controls">
-					<button class="btn" id="lab-replay">Replay</button>
 					<button class="btn" data-lab-split="lines">Lines</button>
 					<button class="btn" data-lab-split="words">Words</button>
 					<button class="btn" data-lab-split="chars">Chars</button>
@@ -1211,6 +1218,7 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 			// ---- 05 Stagger lab ----
 			const labSplit = document.getElementById('lab-split');
+			const labSplits = document.querySelectorAll('split-text.lab-split');
 			const labDelay = document.getElementById('lab-delay');
 			const labStagger = document.getElementById('lab-stagger');
 			const labDuration = document.getElementById('lab-duration');
@@ -1227,14 +1235,14 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 			[labDelay, labStagger, labDuration].forEach((el) => el.addEventListener('input', setLabSliderValues));
 
 			const replayLab = () => {
-				labSplit.setAttribute('delay', labDelay.value);
-				labSplit.setAttribute('stagger', labStagger.value);
-				labSplit.setAttribute('duration', labDuration.value);
-				labSplit.split();
-				labSplit.reveal();
+				for (const el of labSplits) {
+					el.setAttribute('delay', labDelay.value);
+					el.setAttribute('stagger', labStagger.value);
+					el.setAttribute('duration', labDuration.value);
+					el.split();
+					el.reveal();
+				}
 			};
-
-			document.getElementById('lab-replay').addEventListener('click', replayLab);
 
 			// All three toggle groups (split / effect / easing) share the same
 			// wiring: data-lab-<attr> on each button carries the value, the
@@ -1248,7 +1256,7 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 				};
 				for (const btn of buttons) {
 					btn.addEventListener('click', () => {
-						labSplit.setAttribute(attr, btn.getAttribute(`data-lab-${attr}`));
+						for (const el of labSplits) el.setAttribute(attr, btn.getAttribute(`data-lab-${attr}`));
 						setActive(btn);
 						replayLab();
 					});

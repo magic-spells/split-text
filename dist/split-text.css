@@ -58,6 +58,16 @@ split-text[effect="spin-y"] .split-text-word-inner, split-text[effect="spin-y"] 
   transform: rotateY(90deg);
 }
 
+split-text[effect="magnetic"] .split-text-word-inner, split-text[effect="magnetic"] .split-text-char-inner {
+  transform: translate(var(--split-text-mx, 10px), var(--split-text-my, 0));
+  filter: blur(var(--split-text-blur, 2px));
+  will-change: transform, opacity, filter;
+}
+
+split-text[effect="magnetic"] .split-text-word, split-text[effect="magnetic"] .split-text-char {
+  overflow: visible;
+}
+
 split-text[data-state="revealing"] .split-text-word-inner, split-text[data-state="revealing"] .split-text-char-inner {
   animation: split-text-rise var(--split-text-duration) var(--split-text-easing) both;
   animation-delay: calc(var(--split-text-delay) + var(--i, 0) * var(--split-text-stagger));
@@ -85,6 +95,10 @@ split-text[effect="spin-x"][data-state="revealing"] .split-text-word-inner, spli
 
 split-text[effect="spin-y"][data-state="revealing"] .split-text-word-inner, split-text[effect="spin-y"][data-state="revealing"] .split-text-char-inner {
   animation-name: split-text-spin-y;
+}
+
+split-text[effect="magnetic"][data-state="revealing"] .split-text-word-inner, split-text[effect="magnetic"][data-state="revealing"] .split-text-char-inner {
+  animation-name: split-text-magnetic;
 }
 
 @keyframes split-text-rise {
@@ -170,6 +184,20 @@ split-text[effect="spin-y"][data-state="revealing"] .split-text-word-inner, spli
   to {
     opacity: 1;
     transform: rotateY(0);
+  }
+}
+
+@keyframes split-text-magnetic {
+  from {
+    transform: translate(var(--split-text-mx, 10px), var(--split-text-my, 0));
+    filter: blur(var(--split-text-blur, 2px));
+    opacity: 0;
+  }
+
+  to {
+    filter: blur();
+    opacity: 1;
+    transform: translate(0);
   }
 }
 

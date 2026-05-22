@@ -10,6 +10,20 @@ const DEFAULTS = {
 	offset: '20%',
 };
 
+// The magnetic effect defaults to an ease-in curve (slow drift, fast arrival)
+// so each piece accelerates as it's "pulled" into place, unless the author
+// passes an explicit `easing`.
+const MAGNETIC_EASING = 'cubic-bezier(0.5, 0, 1, 1)';
+
+// Per-unit scatter for the magnetic effect, in px. Each piece starts shifted
+// right (always positive X: a base offset plus a random extra) and at a random
+// vertical offset (both directions), so letters appear to fly in from varied
+// directions before snapping home. Set in JS because CSS can't randomize.
+const MAGNETIC_BASE_X = 10;
+const MAGNETIC_EXTRA_X_MIN = 10;
+const MAGNETIC_EXTRA_X_MAX = 100;
+const MAGNETIC_Y_RANGE = 100;
+
 /**
  * Custom element that splits its text content into words, characters, or lines
  * and animates each unit with a CSS-driven slide-up + fade-in stagger.
@@ -22,7 +36,7 @@ const DEFAULTS = {
  *   easing    — CSS easing function (default cubic-bezier(0.16, 1, 0.3, 1))
  *   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
  *   offset    — distance from bottom of viewport before firing (default "20%"; set "0" to disable)
- *   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y"
+ *   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y" | "magnetic"
  */
 class SplitText extends HTMLElement {
 	#originalHTML;
@@ -31,6 +45,7 @@ class SplitText extends HTMLElement {
 	#initialized = false;
 	#revealed = false;
 	#splitMode;
+	#effect;
 	#units = [];
 	#lineCount = 0;
 
@@ -52,6 +67,7 @@ class SplitText extends HTMLElement {
 
 			const splitAttr = _.getAttribute('split');
 			_.#splitMode = splitAttr === 'chars' || splitAttr === 'lines' ? splitAttr : 'words';
+			_.#effect = _.getAttribute('effect') || 'rise';
 
 			if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
 				_.#markRevealed();
@@ -128,6 +144,17 @@ class SplitText extends HTMLElement {
 		_.connectedCallback();
 	}
 
+	// Magnetic effect only: stamp each inner span with a random start offset.
+	// The keyframe (and the pre-reveal initial state) read these custom
+	// properties, so each piece flies in from its own spot before snapping home.
+	#applyMagneticOffset(inner) {
+		if (this.#effect !== 'magnetic') return;
+		const x = MAGNETIC_BASE_X + MAGNETIC_EXTRA_X_MIN + Math.random() * (MAGNETIC_EXTRA_X_MAX - MAGNETIC_EXTRA_X_MIN);
+		const y = Math.random() * (MAGNETIC_Y_RANGE * 2) - MAGNETIC_Y_RANGE;
+		inner.style.setProperty('--split-text-mx', `${x.toFixed(1)}px`);
+		inner.style.setProperty('--split-text-my', `${y.toFixed(1)}px`);
+	}
+
 	#numericAttr(name, fallback) {
 		const raw = this.getAttribute(name);
 		if (raw === null) return fallback;
@@ -143,7 +170,8 @@ class SplitText extends HTMLElement {
 			'--split-text-duration',
 			`${_.#numericAttr('duration', DEFAULTS.duration)}ms`
 		);
-		_.style.setProperty('--split-text-easing', _.getAttribute('easing') || DEFAULTS.easing);
+		const defaultEasing = _.#effect === 'magnetic' ? MAGNETIC_EASING : DEFAULTS.easing;
+		_.style.setProperty('--split-text-easing', _.getAttribute('easing') || defaultEasing);
 	}
 
 	#setupTrigger() {
@@ -359,6 +387,7 @@ class SplitText extends HTMLElement {
 		const inner = document.createElement('span');
 		inner.className = 'split-text-word-inner';
 		inner.style.setProperty('--i', index);
+		_.#applyMagneticOffset(inner);
 		inner.textContent = text;
 		outer.appendChild(inner);
 		_.#units.push(inner);
@@ -401,6 +430,7 @@ class SplitText extends HTMLElement {
 					const charInner = document.createElement('span');
 					charInner.className = 'split-text-char-inner';
 					charInner.style.setProperty('--i', index++);
+					_.#applyMagneticOffset(charInner);
 					charInner.textContent = grapheme;
 					charOuter.appendChild(charInner);
 					wordOuter.appendChild(charOuter);

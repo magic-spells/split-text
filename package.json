@@ -1,6 +1,6 @@
 {
 	"name": "@magic-spells/split-text",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Lightweight text-reveal web component — slide-up animation by word, character, or line with no dependencies",
 	"author": "Cory Schulz",
 	"license": "MIT",
@@ -37,8 +37,7 @@
 		"accessibility"
 	],
 	"files": [
-		"dist/",
-		"src/"
+		"dist/"
 	],
 	"scripts": {
 		"build": "NODE_ENV=production node scripts/build.mjs",

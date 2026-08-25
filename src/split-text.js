@@ -2,6 +2,7 @@ import './split-text.css';
 
 const DEFAULTS = {
 	split: 'words',
+	effect: 'rise',
 	delay: 0,
 	stagger: 30,
 	duration: 800,
@@ -10,19 +11,22 @@ const DEFAULTS = {
 	offset: '20%',
 };
 
-// The magnetic effect defaults to an ease-in curve (slow drift, fast arrival)
-// so each piece accelerates as it's "pulled" into place, unless the author
-// passes an explicit `easing`.
-const MAGNETIC_EASING = 'cubic-bezier(0.5, 0, 1, 1)';
+// Registered effects, keyed by the value of the `effect` attribute. An effect
+// is CSS first — resting state, `animation-name` binding, and `@keyframes` all
+// live in the consumer's stylesheet so they exist at first paint. Registration
+// only carries the two things CSS can't express: a default easing curve and a
+// per-unit hook for stamping randomized custom properties.
+//
+// Deliberately no `css` option: injected CSS would arrive with the JS chunk,
+// after first paint, so an effect's resting state wouldn't be applied yet and
+// the flash `split-text:not(:defined)` prevents would come right back.
+const EFFECTS = new Map();
 
-// Per-unit scatter for the magnetic effect, in px. Each piece starts shifted
-// right (always positive X: a base offset plus a random extra) and at a random
-// vertical offset (both directions), so letters appear to fly in from varied
-// directions before snapping home. Set in JS because CSS can't randomize.
-const MAGNETIC_BASE_X = 10;
-const MAGNETIC_EXTRA_X_MIN = 10;
-const MAGNETIC_EXTRA_X_MAX = 100;
-const MAGNETIC_Y_RANGE = 100;
+// Under Node (SSG / SSR prerender) there is no HTMLElement to extend, and
+// `class X extends undefined` throws at module scope. Fall back to a plain base
+// so importing the package is inert instead of fatal — nothing else in the
+// class runs without a custom-element upgrade, which only happens in a browser.
+const BaseElement = typeof HTMLElement === 'undefined' ? class {} : HTMLElement;
 
 /**
  * Custom element that splits its text content into words, characters, or lines
@@ -37,8 +41,9 @@ const MAGNETIC_Y_RANGE = 100;
  *   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
  *   offset    — distance from bottom of viewport before firing (default "20%"; set "0" to disable)
  *   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y" | "magnetic"
+ *               (or any name passed to SplitText.registerEffect)
  */
-class SplitText extends HTMLElement {
+class SplitText extends BaseElement {
 	#originalHTML;
 	#abortController;
 	#observer;
@@ -48,6 +53,41 @@ class SplitText extends HTMLElement {
 	#effect;
 	#units = [];
 	#lineCount = 0;
+
+	/**
+	 * Register a custom effect. The visual side of an effect is authored in CSS
+	 * (resting state + `[data-state="revealing"] { animation-name }` + keyframes);
+	 * this only adds the parts CSS can't do.
+	 *
+	 * @param {string} name — matches the host's `effect` attribute
+	 * @param {object} [config]
+	 * @param {string} [config.easing] — default `--split-text-easing` for this
+	 *   effect; an explicit `easing` attribute still wins.
+	 * @param {(inner: HTMLElement, index: number, total: number) => void} [config.perUnit]
+	 *   — called once per split unit; set CSS custom properties on `inner`
+	 *   (e.g. `--split-text-jitter`) to give each unit its own start state.
+	 */
+	static registerEffect(name, config = {}) {
+		if (typeof name !== 'string' || name.trim() === '') {
+			throw new TypeError('SplitText.registerEffect: name must be a non-empty string');
+		}
+		if (config === null || typeof config !== 'object') {
+			throw new TypeError('SplitText.registerEffect: config must be an object');
+		}
+		EFFECTS.set(name, config);
+
+		// The element is defined at module scope, so anything already in the DOM
+		// upgraded before this call could run. Re-apply to live instances that
+		// haven't revealed yet, so registration order doesn't matter.
+		if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
+		const escaped = name.replace(/["\\]/g, '\\$&');
+		let selector = `split-text[effect="${escaped}"]`;
+		// Hosts with no `effect` attribute run the default effect
+		if (name === DEFAULTS.effect) selector += ', split-text:not([effect])';
+		for (const element of document.querySelectorAll(selector)) {
+			if (element instanceof SplitText) element.#refreshEffect();
+		}
+	}
 
 	connectedCallback() {
 		const _ = this;
@@ -67,7 +107,7 @@ class SplitText extends HTMLElement {
 
 			const splitAttr = _.getAttribute('split');
 			_.#splitMode = splitAttr === 'chars' || splitAttr === 'lines' ? splitAttr : 'words';
-			_.#effect = _.getAttribute('effect') || 'rise';
+			_.#effect = _.getAttribute('effect') || DEFAULTS.effect;
 
 			if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
 				_.#markRevealed();
@@ -81,6 +121,7 @@ class SplitText extends HTMLElement {
 			// Lines depends on measured layout, so defer to reveal time.
 			if (_.#splitMode === 'words') _.#splitWords();
 			else if (_.#splitMode === 'chars') _.#splitChars();
+			_.#stampEffectVars();
 		} else {
 			// Reconnecting before reveal — re-check reduced-motion and re-apply
 			// timing in case the user adopted us into a new document.
@@ -144,15 +185,40 @@ class SplitText extends HTMLElement {
 		_.connectedCallback();
 	}
 
-	// Magnetic effect only: stamp each inner span with a random start offset.
-	// The keyframe (and the pre-reveal initial state) read these custom
-	// properties, so each piece flies in from its own spot before snapping home.
-	#applyMagneticOffset(inner) {
-		if (this.#effect !== 'magnetic') return;
-		const x = MAGNETIC_BASE_X + MAGNETIC_EXTRA_X_MIN + Math.random() * (MAGNETIC_EXTRA_X_MAX - MAGNETIC_EXTRA_X_MIN);
-		const y = Math.random() * (MAGNETIC_Y_RANGE * 2) - MAGNETIC_Y_RANGE;
-		inner.style.setProperty('--split-text-mx', `${x.toFixed(1)}px`);
-		inner.style.setProperty('--split-text-my', `${y.toFixed(1)}px`);
+	// Hand one split unit to the registered effect's perUnit hook, if it has one.
+	// The hook stamps CSS custom properties the effect's keyframes read, so each
+	// unit can start from its own randomized state — the one thing CSS can't do.
+	#applyEffectVars(inner, index, total) {
+		const perUnit = EFFECTS.get(this.#effect)?.perUnit;
+		if (typeof perUnit !== 'function') return;
+		try {
+			perUnit(inner, index, total);
+		} catch (error) {
+			// A broken hook must not strand a half-split (and, in lines mode,
+			// still-hidden) host — log and keep splitting.
+			console.error(`split-text: perUnit hook for effect "${this.#effect}" threw`, error);
+		}
+	}
+
+	// Run the perUnit hook across every unit once splitting has finished, so the
+	// hook sees a correct `total`.
+	#stampEffectVars() {
+		const _ = this;
+		if (typeof EFFECTS.get(_.#effect)?.perUnit !== 'function') return;
+		const total = _.#units.length;
+		for (let index = 0; index < total; index++) {
+			_.#applyEffectVars(_.#units[index], index, total);
+		}
+	}
+
+	// An effect registered after this instance upgraded: re-apply its easing and
+	// re-stamp per-unit vars on units that already exist. No-op once revealed —
+	// including the reduced-motion short-circuit, which marks revealed up front.
+	#refreshEffect() {
+		const _ = this;
+		if (!_.#initialized || _.#revealed) return;
+		_.#applyTimingProperties();
+		_.#stampEffectVars();
 	}
 
 	#numericAttr(name, fallback) {
@@ -170,7 +236,7 @@ class SplitText extends HTMLElement {
 			'--split-text-duration',
 			`${_.#numericAttr('duration', DEFAULTS.duration)}ms`
 		);
-		const defaultEasing = _.#effect === 'magnetic' ? MAGNETIC_EASING : DEFAULTS.easing;
+		const defaultEasing = EFFECTS.get(_.#effect)?.easing ?? DEFAULTS.easing;
 		_.style.setProperty('--split-text-easing', _.getAttribute('easing') || defaultEasing);
 	}
 
@@ -243,6 +309,7 @@ class SplitText extends HTMLElement {
 			// controller — bail so we don't mutate stale or detached DOM.
 			if (controller.signal.aborted || _.#abortController !== controller) return;
 			_.#splitLines();
+			_.#stampEffectVars();
 		}
 
 		if (_.#units.length === 0) {
@@ -387,7 +454,6 @@ class SplitText extends HTMLElement {
 		const inner = document.createElement('span');
 		inner.className = 'split-text-word-inner';
 		inner.style.setProperty('--i', index);
-		_.#applyMagneticOffset(inner);
 		inner.textContent = text;
 		outer.appendChild(inner);
 		_.#units.push(inner);
@@ -430,7 +496,6 @@ class SplitText extends HTMLElement {
 					const charInner = document.createElement('span');
 					charInner.className = 'split-text-char-inner';
 					charInner.style.setProperty('--i', index++);
-					_.#applyMagneticOffset(charInner);
 					charInner.textContent = grapheme;
 					charOuter.appendChild(charInner);
 					wordOuter.appendChild(charOuter);
@@ -499,7 +564,24 @@ class SplitText extends HTMLElement {
 	}
 }
 
-if (!customElements.get('split-text')) {
+// The one built-in effect that needs more than CSS, registered through the same
+// public API a consumer would use. Each piece starts shifted right by a random
+// distance (20–110px) at a random height (±100px) — CSS can't randomize — and
+// defaults to an ease-in curve so it drifts, then snaps home like a filing to a
+// magnet. The rest of the effect (resting state, keyframes, the unclipped
+// wrapper) lives in split-text.css alongside every other built-in.
+SplitText.registerEffect('magnetic', {
+	easing: 'cubic-bezier(0.5, 0, 1, 1)',
+	perUnit(inner) {
+		const x = 20 + Math.random() * 90;
+		const y = Math.random() * 200 - 100;
+		inner.style.setProperty('--split-text-mx', `${x.toFixed(1)}px`);
+		inner.style.setProperty('--split-text-my', `${y.toFixed(1)}px`);
+	},
+});
+
+// Guarded so the module stays importable under Node (SSG / SSR consumers).
+if (typeof customElements !== 'undefined' && !customElements.get('split-text')) {
 	customElements.define('split-text', SplitText);
 }
 

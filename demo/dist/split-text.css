@@ -12,6 +12,7 @@ split-text {
   --split-text-distance: 100%;
   --split-text-stagger: 30ms;
   --split-text-delay: 0s;
+  --split-text-jitter: 0;
   --split-text-perspective: 2000px;
   perspective: var(--split-text-perspective);
   display: inline;
@@ -70,7 +71,9 @@ split-text[effect="magnetic"] .split-text-word, split-text[effect="magnetic"] .s
 
 split-text[data-state="revealing"] .split-text-word-inner, split-text[data-state="revealing"] .split-text-char-inner {
   animation: split-text-rise var(--split-text-duration) var(--split-text-easing) both;
-  animation-delay: calc(var(--split-text-delay) + var(--i, 0) * var(--split-text-stagger));
+  animation-delay: max(0s,
+		calc(var(--split-text-delay) + var(--i, 0) * var(--split-text-stagger) +
+				var(--split-text-jitter, 0) * var(--split-text-stagger)));
 }
 
 split-text[effect="drop"][data-state="revealing"] .split-text-word-inner, split-text[effect="drop"][data-state="revealing"] .split-text-char-inner {
@@ -209,7 +212,7 @@ split-text[split="chars"][data-revealed] .split-text-word, split-text[split="cha
   overflow: visible;
 }
 
-split-text[data-revealed] .split-text-word-inner, split-text[data-revealed] .split-text-char-inner {
+split-text[data-revealed][data-revealed] .split-text-word-inner, split-text[data-revealed][data-revealed] .split-text-char-inner {
   filter: none;
   opacity: 1;
   transform: none;

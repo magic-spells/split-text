@@ -5,6 +5,7 @@
 	//#region src/split-text.js
 	var DEFAULTS = {
 		split: "words",
+		effect: "rise",
 		delay: 0,
 		stagger: 30,
 		duration: 800,
@@ -12,11 +13,8 @@
 		trigger: "visible",
 		offset: "20%"
 	};
-	var MAGNETIC_EASING = "cubic-bezier(0.5, 0, 1, 1)";
-	var MAGNETIC_BASE_X = 10;
-	var MAGNETIC_EXTRA_X_MIN = 10;
-	var MAGNETIC_EXTRA_X_MAX = 100;
-	var MAGNETIC_Y_RANGE = 100;
+	var EFFECTS = /* @__PURE__ */ new Map();
+	var BaseElement = typeof HTMLElement === "undefined" ? class {} : HTMLElement;
 	/**
 	* Custom element that splits its text content into words, characters, or lines
 	* and animates each unit with a CSS-driven slide-up + fade-in stagger.
@@ -30,8 +28,9 @@
 	*   trigger   — "visible" (default, IntersectionObserver) | "load" | "manual"
 	*   offset    — distance from bottom of viewport before firing (default "20%"; set "0" to disable)
 	*   effect    — "rise" (default) | "drop" | "slide-right" | "slide-left" | "bloom" | "spin-x" | "spin-y" | "magnetic"
+	*               (or any name passed to SplitText.registerEffect)
 	*/
-	var SplitText = class extends HTMLElement {
+	var SplitText = class SplitText extends BaseElement {
 		#originalHTML;
 		#abortController;
 		#observer;
@@ -41,6 +40,28 @@
 		#effect;
 		#units = [];
 		#lineCount = 0;
+		/**
+		* Register a custom effect. The visual side of an effect is authored in CSS
+		* (resting state + `[data-state="revealing"] { animation-name }` + keyframes);
+		* this only adds the parts CSS can't do.
+		*
+		* @param {string} name — matches the host's `effect` attribute
+		* @param {object} [config]
+		* @param {string} [config.easing] — default `--split-text-easing` for this
+		*   effect; an explicit `easing` attribute still wins.
+		* @param {(inner: HTMLElement, index: number, total: number) => void} [config.perUnit]
+		*   — called once per split unit; set CSS custom properties on `inner`
+		*   (e.g. `--split-text-jitter`) to give each unit its own start state.
+		*/
+		static registerEffect(name, config = {}) {
+			if (typeof name !== "string" || name.trim() === "") throw new TypeError("SplitText.registerEffect: name must be a non-empty string");
+			if (config === null || typeof config !== "object") throw new TypeError("SplitText.registerEffect: config must be an object");
+			EFFECTS.set(name, config);
+			if (typeof document === "undefined" || typeof document.querySelectorAll !== "function") return;
+			let selector = `split-text[effect="${name.replace(/["\\]/g, "\\$&")}"]`;
+			if (name === DEFAULTS.effect) selector += ", split-text:not([effect])";
+			for (const element of document.querySelectorAll(selector)) if (element instanceof SplitText) element.#refreshEffect();
+		}
 		connectedCallback() {
 			const _ = this;
 			if (_.#revealed) return;
@@ -51,7 +72,7 @@
 				if (labelText && !_.hasAttribute("aria-label")) _.setAttribute("aria-label", labelText);
 				const splitAttr = _.getAttribute("split");
 				_.#splitMode = splitAttr === "chars" || splitAttr === "lines" ? splitAttr : "words";
-				_.#effect = _.getAttribute("effect") || "rise";
+				_.#effect = _.getAttribute("effect") || DEFAULTS.effect;
 				if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
 					_.#markRevealed();
 					return;
@@ -59,6 +80,7 @@
 				_.#applyTimingProperties();
 				if (_.#splitMode === "words") _.#splitWords();
 				else if (_.#splitMode === "chars") _.#splitChars();
+				_.#stampEffectVars();
 			} else {
 				if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
 					_.#markRevealed();
@@ -108,12 +130,26 @@
 			} else _.#originalHTML = _.innerHTML;
 			_.connectedCallback();
 		}
-		#applyMagneticOffset(inner) {
-			if (this.#effect !== "magnetic") return;
-			const x = MAGNETIC_BASE_X + MAGNETIC_EXTRA_X_MIN + Math.random() * (MAGNETIC_EXTRA_X_MAX - MAGNETIC_EXTRA_X_MIN);
-			const y = Math.random() * (MAGNETIC_Y_RANGE * 2) - MAGNETIC_Y_RANGE;
-			inner.style.setProperty("--split-text-mx", `${x.toFixed(1)}px`);
-			inner.style.setProperty("--split-text-my", `${y.toFixed(1)}px`);
+		#applyEffectVars(inner, index, total) {
+			const perUnit = EFFECTS.get(this.#effect)?.perUnit;
+			if (typeof perUnit !== "function") return;
+			try {
+				perUnit(inner, index, total);
+			} catch (error) {
+				console.error(`split-text: perUnit hook for effect "${this.#effect}" threw`, error);
+			}
+		}
+		#stampEffectVars() {
+			const _ = this;
+			if (typeof EFFECTS.get(_.#effect)?.perUnit !== "function") return;
+			const total = _.#units.length;
+			for (let index = 0; index < total; index++) _.#applyEffectVars(_.#units[index], index, total);
+		}
+		#refreshEffect() {
+			const _ = this;
+			if (!_.#initialized || _.#revealed) return;
+			_.#applyTimingProperties();
+			_.#stampEffectVars();
 		}
 		#numericAttr(name, fallback) {
 			const raw = this.getAttribute(name);
@@ -126,7 +162,7 @@
 			_.style.setProperty("--split-text-delay", `${_.#numericAttr("delay", DEFAULTS.delay)}ms`);
 			_.style.setProperty("--split-text-stagger", `${_.#numericAttr("stagger", DEFAULTS.stagger)}ms`);
 			_.style.setProperty("--split-text-duration", `${_.#numericAttr("duration", DEFAULTS.duration)}ms`);
-			const defaultEasing = _.#effect === "magnetic" ? MAGNETIC_EASING : DEFAULTS.easing;
+			const defaultEasing = EFFECTS.get(_.#effect)?.easing ?? DEFAULTS.easing;
 			_.style.setProperty("--split-text-easing", _.getAttribute("easing") || defaultEasing);
 		}
 		#setupTrigger() {
@@ -166,6 +202,7 @@
 				} catch {}
 				if (controller.signal.aborted || _.#abortController !== controller) return;
 				_.#splitLines();
+				_.#stampEffectVars();
 			}
 			if (_.#units.length === 0) {
 				_.#markRevealed();
@@ -268,7 +305,6 @@
 			const inner = document.createElement("span");
 			inner.className = "split-text-word-inner";
 			inner.style.setProperty("--i", index);
-			_.#applyMagneticOffset(inner);
 			inner.textContent = text;
 			outer.appendChild(inner);
 			_.#units.push(inner);
@@ -298,7 +334,6 @@
 						const charInner = document.createElement("span");
 						charInner.className = "split-text-char-inner";
 						charInner.style.setProperty("--i", index++);
-						_.#applyMagneticOffset(charInner);
 						charInner.textContent = grapheme;
 						charOuter.appendChild(charInner);
 						wordOuter.appendChild(charOuter);
@@ -349,7 +384,16 @@
 			_.#lineCount = newUnits.length === 0 ? 0 : lineIndex + 1;
 		}
 	};
-	if (!customElements.get("split-text")) customElements.define("split-text", SplitText);
+	SplitText.registerEffect("magnetic", {
+		easing: "cubic-bezier(0.5, 0, 1, 1)",
+		perUnit(inner) {
+			const x = 20 + Math.random() * 90;
+			const y = Math.random() * 200 - 100;
+			inner.style.setProperty("--split-text-mx", `${x.toFixed(1)}px`);
+			inner.style.setProperty("--split-text-my", `${y.toFixed(1)}px`);
+		}
+	});
+	if (typeof customElements !== "undefined" && !customElements.get("split-text")) customElements.define("split-text", SplitText);
 	//#endregion
 	exports.SplitText = SplitText;
 });

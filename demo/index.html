@@ -554,6 +554,46 @@
 				}
 			}
 
+			/* ---- Custom effect: "ember" ----
+			   Authored entirely here, in the page's own stylesheet — the component
+			   ships no CSS for it. Three parts: a resting state, an unclipped
+			   wrapper, and an animation-name binding pointing at the keyframe. */
+
+			/* resting state — matches the keyframe's `from` frame exactly */
+			split-text[effect='ember'] .split-text-word-inner,
+			split-text[effect='ember'] .split-text-char-inner {
+				transform: translateY(0.5em) scale(0.55) rotate(var(--ember-tilt, 0deg));
+				filter: blur(6px);
+				opacity: 0;
+				will-change: transform, opacity, filter;
+			}
+
+			/* the blur halo spills past the box, so lift the mask */
+			split-text[effect='ember'] .split-text-word,
+			split-text[effect='ember'] .split-text-char {
+				overflow: visible;
+			}
+
+			/* only animation-name — duration, easing, delay and the stagger calc
+			   all come from the component's shared reveal rule */
+			split-text[effect='ember'][data-state='revealing'] .split-text-word-inner,
+			split-text[effect='ember'][data-state='revealing'] .split-text-char-inner {
+				animation-name: ember;
+			}
+
+			@keyframes ember {
+				from {
+					transform: translateY(0.5em) scale(0.55) rotate(var(--ember-tilt, 0deg));
+					filter: blur(6px);
+					opacity: 0;
+				}
+				to {
+					transform: translateY(0) scale(1) rotate(0deg);
+					filter: blur(0);
+					opacity: 1;
+				}
+			}
+
 			/* ---- Footer ---- */
 			footer {
 				max-width: 1100px;
@@ -902,6 +942,58 @@ npm i @magic-spells/split-text
 				</div>
 			</section>
 
+			<!-- ---- 10 Custom effect ---- -->
+			<section class="demo-section" id="custom-effect">
+				<h2>Write your <em>own</em>.</h2>
+				<p class="demo-desc">
+					An effect is CSS. A resting state, an <code>animation-name</code> bound to
+					<code>[data-state="revealing"]</code>, and a <code>@keyframes</code> rule — that's a new
+					<code>effect</code> value, with the same <code>delay</code> / <code>stagger</code> /
+					<code>duration</code> plumbing as every built-in. The <code>ember</code> effect below is
+					defined in this page's stylesheet; the component ships nothing for it.
+					<code>SplitText.registerEffect()</code> then adds the two things CSS can't do on its
+					own — a default easing curve, and a per-unit random start. Here each character gets a
+					random tilt plus a <code>--split-text-jitter</code> that grows toward the end of the
+					line, so the tail scatters loose while the opening stays tight.
+				</p>
+				<div class="demo-stage tall">
+					<p class="stage-headline">
+						<split-text effect="ember" split="chars" stagger="30" duration="1100">
+							Struck from the same flint.
+						</split-text>
+					</p>
+				</div>
+				<div class="controls">
+					<button class="btn" data-replay>Replay</button>
+				</div>
+				<div class="code-block code-block-wide">
+<span class="hl-cm">/* your stylesheet — resting state, unmask, keyframe binding */</span>
+<span class="hl-tag">split-text</span>[<span class="hl-attr">effect</span>=<span class="hl-val">'ember'</span>] .<span class="hl-attr">split-text-char-inner</span> {
+  <span class="hl-attr">transform</span>: <span class="hl-val">translateY(0.5em) scale(0.55) rotate(var(--ember-tilt, 0deg))</span>;
+  <span class="hl-attr">filter</span>: <span class="hl-val">blur(6px)</span>;
+  <span class="hl-attr">opacity</span>: <span class="hl-val">0</span>;
+}
+<span class="hl-tag">split-text</span>[<span class="hl-attr">effect</span>=<span class="hl-val">'ember'</span>] .<span class="hl-attr">split-text-char</span> { <span class="hl-attr">overflow</span>: <span class="hl-val">visible</span>; }
+<span class="hl-tag">split-text</span>[<span class="hl-attr">effect</span>=<span class="hl-val">'ember'</span>][<span class="hl-attr">data-state</span>=<span class="hl-val">'revealing'</span>] .<span class="hl-attr">split-text-char-inner</span> {
+  <span class="hl-attr">animation-name</span>: <span class="hl-val">ember</span>;
+}
+<span class="hl-attr">@keyframes</span> <span class="hl-val">ember</span> { <span class="hl-cm">/* the resting state → transform: none, filter: none, opacity: 1 */</span> }
+
+<span class="hl-cm">// optional JS — a default easing curve and a per-unit random start</span>
+<span class="hl-tag">import</span> { SplitText } <span class="hl-tag">from</span> <span class="hl-val">'@magic-spells/split-text'</span>;
+
+<span class="hl-tag">SplitText</span>.<span class="hl-attr">registerEffect</span>(<span class="hl-val">'ember'</span>, {
+  <span class="hl-attr">easing</span>: <span class="hl-val">'cubic-bezier(0.22, 1, 0.36, 1)'</span>,
+  <span class="hl-attr">perUnit</span>(inner, index, total) {
+    <span class="hl-cm">// 0 at the first character, 1 at the last</span>
+    <span class="hl-tag">const</span> spread = total &gt; 1 ? index / (total - 1) : 0;
+    inner.style.setProperty(<span class="hl-val">'--ember-tilt'</span>, <span class="hl-val">`${(Math.random() * 24 - 12).toFixed(1)}deg`</span>);
+    inner.style.setProperty(<span class="hl-val">'--split-text-jitter'</span>, (Math.random() * 2.5 * spread).toFixed(2));
+  },
+});
+				</div>
+			</section>
+
 			<!-- ---- 09 Stagger lab ---- -->
 			<section class="demo-section">
 				<h2>Tune the timing.</h2>
@@ -960,6 +1052,7 @@ npm i @magic-spells/split-text
 						<button class="btn" data-lab-effect="spin-x">Spin X</button>
 						<button class="btn" data-lab-effect="spin-y">Spin Y</button>
 						<button class="btn" data-lab-effect="magnetic">Magnetic</button>
+						<button class="btn" data-lab-effect="ember">Ember</button>
 					</div>
 				</div>
 				<div class="controls-group">
@@ -1106,7 +1199,8 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 			<section class="demo-section">
 				<h2>The whole API, on one screen.</h2>
 				<p class="demo-desc">
-					Eight attributes, nine custom properties, two methods, two events. That's everything.
+					Eight attributes, ten custom properties, two methods, two events, and one static hook
+					for registering effects of your own. That's everything.
 				</p>
 
 				<h3 class="ref-heading">Attributes</h3>
@@ -1118,7 +1212,7 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 						<div><code>split</code></div><div><code>words</code></div><div><code>words</code> · <code>chars</code> · <code>lines</code></div>
 					</div>
 					<div class="ref-row">
-						<div><code>effect</code></div><div><code>rise</code></div><div><code>rise</code> · <code>drop</code> · <code>slide-right</code> · <code>slide-left</code> · <code>bloom</code> · <code>spin-x</code> · <code>spin-y</code> · <code>magnetic</code></div>
+						<div><code>effect</code></div><div><code>rise</code></div><div><code>rise</code> · <code>drop</code> · <code>slide-right</code> · <code>slide-left</code> · <code>bloom</code> · <code>spin-x</code> · <code>spin-y</code> · <code>magnetic</code> · <a href="#custom-effect">or your own</a></div>
 					</div>
 					<div class="ref-row">
 						<div><code>delay</code></div><div><code>0</code></div><div>Initial delay before first unit (ms)</div>
@@ -1172,6 +1266,9 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 					<div class="ref-row">
 						<div><code>--split-text-scale</code></div><div><code>0.7</code></div><div>Bloom starting scale</div>
 					</div>
+					<div class="ref-row">
+						<div><code>--split-text-jitter</code></div><div><code>0</code></div><div>Per-unit timing offset, in stagger steps (clamped so total delay never goes negative)</div>
+					</div>
 				</div>
 
 				<h3 class="ref-heading">Methods &amp; Events</h3>
@@ -1190,6 +1287,9 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 					</div>
 					<div class="ref-row">
 						<div><code>split-text:complete</code></div><div>event</div><div>Fires after the last unit settles</div>
+					</div>
+					<div class="ref-row">
+						<div><code>SplitText.registerEffect(name, config)</code></div><div>static</div><div>Register a <a href="#custom-effect">custom effect</a> · <code>{ easing, perUnit(inner, index, total) }</code>, both optional</div>
 					</div>
 				</div>
 
@@ -1219,6 +1319,27 @@ document.querySelector(<span class="hl-val">'#manual-split'</span>).reveal()
 
 		<script type="module" src="dist/split-text.esm.js"></script>
 		<script type="module">
+			// Same module instance the <script src> above already evaluated, so this
+			// shares the component's effect registry.
+			import { SplitText } from './dist/split-text.esm.js';
+
+			// ---- 10 Custom effect: "ember" ----
+			// The visual half lives in this page's <style> block. This adds only
+			// what CSS can't express: a default easing, and a per-unit random start.
+			// Note this runs *after* the component defined itself and the
+			// <split-text effect="ember"> below already upgraded — registerEffect
+			// re-applies to live instances, so the ordering doesn't matter.
+			SplitText.registerEffect('ember', {
+				easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+				perUnit(inner, index, total) {
+					// 0 at the first character, 1 at the last
+					const spread = total > 1 ? index / (total - 1) : 0;
+					inner.style.setProperty('--ember-tilt', `${(Math.random() * 24 - 12).toFixed(1)}deg`);
+					// scatter grows toward the end of the line — the tail comes loose
+					inner.style.setProperty('--split-text-jitter', (Math.random() * 2.5 * spread).toFixed(2));
+				},
+			});
+
 			// ---- Copy install command ----
 			const installValue = document.querySelector('.install-value');
 			if (installValue) {
